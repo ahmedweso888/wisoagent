@@ -13,7 +13,7 @@ import { t as supabase } from "./client-DIXqhfAR.mjs";
 import { n as useAuth } from "./useAuth-BO86jEMb.mjs";
 import { t as EmptyState } from "./EmptyState-Dyw3WASN.mjs";
 import { t as Input } from "./input-DC57PAAM.mjs";
-import { A as Flame, c as Trophy, k as GraduationCap, m as ShieldCheck, s as User, w as LockKeyhole, y as Phone } from "../_libs/lucide-react.mjs";
+import { E as LockKeyhole, M as Flame, g as ShieldCheck, j as GraduationCap, l as User, u as Trophy, x as Phone } from "../_libs/lucide-react.mjs";
 import { t as StatCard } from "./StatCard-DTaJ4i7N.mjs";
 import { n as CardContent, t as Card } from "./card-BcujUCMc.mjs";
 import { t as Progress } from "./progress-j55G0Y_d.mjs";

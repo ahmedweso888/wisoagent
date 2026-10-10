@@ -1,7 +1,7 @@
 import { f as require_jsx_runtime } from "../_libs/@radix-ui/react-avatar+[...].mjs";
 import { n as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as supabase } from "./client-DIXqhfAR.mjs";
-import { M as Facebook, O as Instagram, S as MessageCircle, h as Send, t as Youtube } from "../_libs/lucide-react.mjs";
+import { A as Instagram, P as Facebook, _ as Send, t as Youtube, w as MessageCircle } from "../_libs/lucide-react.mjs";
 import { t as WisoMark } from "./WisoMark-DOvYZQdC.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/Footer-DDF1fT37.js
 var import_jsx_runtime = require_jsx_runtime();

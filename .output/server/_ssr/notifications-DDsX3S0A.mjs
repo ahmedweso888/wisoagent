@@ -3,7 +3,7 @@ import { t as Button } from "./button-CAvS9N1W.mjs";
 import { t as PageHeader } from "./PageHeader-DhP6ZZXs.mjs";
 import { i as useQueryClient, n as useQuery, t as useMutation } from "../_libs/tanstack__react-query.mjs";
 import { t as supabase } from "./client-DIXqhfAR.mjs";
-import { G as CheckCheck, Z as Bell } from "../_libs/lucide-react.mjs";
+import { K as CheckCheck, Q as Bell } from "../_libs/lucide-react.mjs";
 import { n as CardContent, t as Card } from "./card-BcujUCMc.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/notifications-DDsX3S0A.js
 var import_jsx_runtime = require_jsx_runtime();

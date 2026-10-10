@@ -1,11 +1,11 @@
 {
-  "compatibility_date": "2026-10-06",
+  "compatibility_date": "2026-10-10",
   "main": "index.mjs",
   "assets": {
     "binding": "ASSETS",
     "directory": "..\\public"
   },
-  "name": "ahmedweso888-wiso-ai",
+  "name": "ahmedweso888-wisoagent",
   "compatibility_flags": [
     "nodejs_compat"
   ],

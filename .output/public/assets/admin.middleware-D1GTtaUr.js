@@ -1,0 +1,1 @@
+import{n as e}from"./auth-middleware-ChfDy25B.js";import{b as t}from"./index-D45Sthvw.js";var n=t({type:`function`}).middleware([e]);export{n as t};

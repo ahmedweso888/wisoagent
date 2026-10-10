@@ -3,7 +3,7 @@ import { t as PageHeader } from "./PageHeader-DhP6ZZXs.mjs";
 import { n as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { t as supabase } from "./client-DIXqhfAR.mjs";
 import { n as useAuth } from "./useAuth-BO86jEMb.mjs";
-import { B as CircleCheck, V as CircleAlert, q as CalendarClock, u as Target } from "../_libs/lucide-react.mjs";
+import { H as CircleAlert, J as CalendarClock, V as CircleCheck, f as Target } from "../_libs/lucide-react.mjs";
 import { n as CardContent, t as Card } from "./card-BcujUCMc.mjs";
 import { t as Progress } from "./progress-j55G0Y_d.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/dashboard-BH2K_hmN.js

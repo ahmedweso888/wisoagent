@@ -1,5 +1,5 @@
 import { i as __toESM } from "../_runtime.mjs";
-import { _ as useNavigate, h as Link } from "../_libs/@tanstack/react-router+[...].mjs";
+import { x as useNavigate, y as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { f as require_jsx_runtime } from "../_libs/@radix-ui/react-avatar+[...].mjs";
 import { t as Button } from "./button-CAvS9N1W.mjs";
