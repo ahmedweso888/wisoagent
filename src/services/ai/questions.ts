@@ -6,9 +6,7 @@ import type { AiResult, GeneratedQuestion, QuestionGenerationRequest } from "./t
 export const questionsAgent = {
   name: "questions" as const,
 
-  async generate(
-    request: QuestionGenerationRequest,
-  ): Promise<AiResult<GeneratedQuestion[]>> {
+  async generate(request: QuestionGenerationRequest): Promise<AiResult<GeneratedQuestion[]>> {
     return callAgent("questions", () => aiGenerateQuestions({ data: request }));
   },
 

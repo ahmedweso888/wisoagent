@@ -7,8 +7,6 @@ export const performanceAgent = {
   name: "performance" as const,
 
   async snapshot(payload?: unknown): Promise<AiResult<PerformanceSnapshot>> {
-    return callAgent("performance", () =>
-      aiPerformanceSnapshot({ data: { payload } }),
-    );
+    return callAgent("performance", () => aiPerformanceSnapshot({ data: { payload } }));
   },
 };

@@ -13,8 +13,6 @@ export const syllabusAgent = {
   },
 
   async understandLesson(documentId: string): Promise<AiResult<ExtractedSyllabus>> {
-    return callAgent("syllabus", () =>
-      aiAnalyzeDocument({ data: { documentId, kind: "image" } }),
-    );
+    return callAgent("syllabus", () => aiAnalyzeDocument({ data: { documentId, kind: "image" } }));
   },
 };

@@ -9,12 +9,7 @@
 import type { Difficulty, MistakeType, QuestionType } from "@/lib/constants";
 
 export type AgentName =
-  | "planner"
-  | "syllabus"
-  | "questions"
-  | "validation"
-  | "mistakes"
-  | "performance";
+  "planner" | "syllabus" | "questions" | "validation" | "mistakes" | "performance";
 
 export type AiServiceStatus = "not_configured" | "ok" | "error";
 
@@ -120,7 +115,7 @@ export type QuestionGenerationRequest = {
   /** Concept ids to attack, produced by the mistake analyzer. */
   targetConceptIds?: string[];
   /** Question ids the student already solved; must not be repeated. */
-  excludeQuestionIds?: string[];
+  excludeQuestionIds?: string[] | undefined;
   language: "ar" | "en";
 };
 
@@ -188,4 +183,24 @@ export type PerformanceSnapshot = {
   nightmareSolved: number;
   averageTimeSeconds: number;
   weakConcepts: { conceptId: string; title: string; masteryScore: number }[];
+};
+
+export type QuestionGenerationStats = {
+  requested: number;
+  reused: number;
+  generated: number;
+  accepted: number;
+  rejected: number;
+  remaining: number;
+  retries: number;
+  escalations: number;
+  replacementCount: number;
+  rounds: number;
+  status: "completed" | "partial";
+};
+
+export type QuestionGenerationResult = {
+  requestId: string;
+  questions: GeneratedQuestion[];
+  stats: QuestionGenerationStats;
 };

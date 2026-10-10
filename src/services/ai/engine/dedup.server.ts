@@ -21,16 +21,18 @@ export function normalizeText(text: string): string {
   // Arabic normalization: unify forms of Alef, Yaa, Teh Marbuta, etc.
   result = result
     .replace(/[\u0622\u0623\u0625]/g, "\u0627") // Alef variants → bare Alef
-    .replace(/\u0649/g, "\u064A")              // Alef Maksura → Yaa
-    .replace(/\u0629/g, "\u0647")              // Teh Marbuta → Haa
-    .replace(/\u0640/g, "")                    // remove Tatweel
-    .replace(/[\u064B-\u0652\u0670]/g, "")      // remove short vowels / superscript alef
-    .replace(/\u0651/g, "");                    // remove shadda
+    .replace(/\u0649/g, "\u064A") // Alef Maksura → Yaa
+    .replace(/\u0629/g, "\u0647") // Teh Marbuta → Haa
+    .replace(/\u0640/g, "") // remove Tatweel
+    .replace(/[\u064B-\u0652\u0670]/g, "") // remove short vowels / superscript alef
+    .replace(/\u0651/g, ""); // remove shadda
 
   // Whitespace normalization
   result = result.replace(/\s+/g, " ").trim();
 
-  // Punctuation normalization: remove all punctuation
+  // Punctuation normalization: Latin + Arabic punctuation (Arabic marks live
+  // inside the Arabic block, so they must be removed explicitly).
+  result = result.replace(/[\u060C\u061B\u061F\u066A-\u066D\u06D4\u00AB\u00BB]/g, " ");
   result = result.replace(/[^\w\u0600-\u06FF\s]/g, " ");
   result = result.replace(/\s+/g, " ").trim();
 
@@ -124,9 +126,10 @@ export function isDuplicate(
  * Batch dedup: removes duplicates within a single generation batch.
  * Returns the deduplicated array and the list of removed duplicates.
  */
-export function deduplicateBatch(
-  questions: GeneratedQuestion[],
-): { unique: GeneratedQuestion[]; duplicates: GeneratedQuestion[] } {
+export function deduplicateBatch(questions: GeneratedQuestion[]): {
+  unique: GeneratedQuestion[];
+  duplicates: GeneratedQuestion[];
+} {
   const unique: GeneratedQuestion[] = [];
   const duplicates: GeneratedQuestion[] = [];
 

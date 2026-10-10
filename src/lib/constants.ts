@@ -3,13 +3,7 @@
  */
 export const SYLLABUS_DEADLINE = new Date("2027-01-01T00:00:00Z");
 
-export const DIFFICULTY_LEVELS = [
-  "basic",
-  "medium",
-  "hard",
-  "very_hard",
-  "nightmare",
-] as const;
+export const DIFFICULTY_LEVELS = ["basic", "medium", "hard", "very_hard", "nightmare"] as const;
 export type Difficulty = (typeof DIFFICULTY_LEVELS)[number];
 
 /** Default generation mode heavily prioritises the top three tiers. */

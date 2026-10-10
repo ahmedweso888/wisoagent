@@ -79,8 +79,7 @@ const ar: Dict = {
   "dashboard.overallProgress": "تقدّم المنهج الكامل",
   "dashboard.countdown": "المتبقي حتى 1 يناير 2027",
   "dashboard.todayMission": "مهمة اليوم",
-  "dashboard.todayMission.empty":
-    "لا توجد مهمة لليوم. أنشئ خطتك من صفحة المخطط الزمني.",
+  "dashboard.todayMission.empty": "لا توجد مهمة لليوم. أنشئ خطتك من صفحة المخطط الزمني.",
   "dashboard.subjects": "تقدّم المواد",
   "dashboard.recent": "الأداء الأخير",
   "dashboard.weakest": "أضعف المفاهيم",
@@ -119,8 +118,7 @@ const ar: Dict = {
   "knowledge.status.processed": "تمت المعالجة",
   "knowledge.status.failed": "فشل",
   "knowledge.syllabusMap": "خريطة المنهج",
-  "knowledge.syllabusMap.empty":
-    "ستظهر الوحدات والفصول والمفاهيم هنا بعد تحليل المواد المرفوعة.",
+  "knowledge.syllabusMap.empty": "ستظهر الوحدات والفصول والمفاهيم هنا بعد تحليل المواد المرفوعة.",
 
   "questions.title": "بنك الأسئلة",
   "questions.subtitle": "توليد كثيف للأسئلة الصعبة مع تحقق كامل.",

@@ -1,0 +1,47 @@
+-- All privileged admin RPCs are now server-only. Browser admin routes use
+-- TanStack Start server functions and the server-side service-role client.
+REVOKE EXECUTE ON FUNCTION public.admin_ai_stats() FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_ai_tier_stats() FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_generate_center_codes(UUID, UUID, INTEGER) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_grant_access(UUID, INTEGER, TIMESTAMPTZ, BOOLEAN, BOOLEAN) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_list_users(TEXT, INTEGER) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_log(UUID, TEXT, JSONB) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_manage_trial(UUID, TEXT, INTEGER) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_reset_national_id(UUID) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_revenue_summary() FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_review_payment_request(UUID, BOOLEAN, TEXT) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_review_special_request(UUID, TEXT, NUMERIC, TEXT) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_revoke_access(UUID) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_set_ai_switches(BOOLEAN, BOOLEAN) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_set_contest_status(TEXT) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_set_extreme_access(UUID, BOOLEAN) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_set_role(UUID, public.app_role, BOOLEAN) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_set_subscription(UUID, public.subscription_status, TEXT, INTEGER) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_set_suspended(UUID, BOOLEAN, TEXT) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_stats() FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_update_ai_settings(TEXT, TEXT, NUMERIC, INTEGER, BOOLEAN, TEXT, INTEGER, INTEGER, INTEGER, INTEGER, BOOLEAN, BOOLEAN, BOOLEAN) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_update_platform_settings(public.platform_status, BOOLEAN, TEXT, BOOLEAN, TIMESTAMPTZ, TIMESTAMPTZ) FROM authenticated, anon, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.admin_user_detail(UUID) FROM authenticated, anon, PUBLIC;
+
+GRANT EXECUTE ON FUNCTION public.admin_ai_stats() TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_ai_tier_stats() TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_generate_center_codes(UUID, UUID, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_grant_access(UUID, INTEGER, TIMESTAMPTZ, BOOLEAN, BOOLEAN) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_list_users(TEXT, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_log(UUID, TEXT, JSONB) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_manage_trial(UUID, TEXT, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_reset_national_id(UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_revenue_summary() TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_review_payment_request(UUID, BOOLEAN, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_review_special_request(UUID, TEXT, NUMERIC, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_revoke_access(UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_set_ai_switches(BOOLEAN, BOOLEAN) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_set_contest_status(TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_set_extreme_access(UUID, BOOLEAN) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_set_role(UUID, public.app_role, BOOLEAN) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_set_subscription(UUID, public.subscription_status, TEXT, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_set_suspended(UUID, BOOLEAN, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_stats() TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_update_ai_settings(TEXT, TEXT, NUMERIC, INTEGER, BOOLEAN, TEXT, INTEGER, INTEGER, INTEGER, INTEGER, BOOLEAN, BOOLEAN, BOOLEAN) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_update_platform_settings(public.platform_status, BOOLEAN, TEXT, BOOLEAN, TIMESTAMPTZ, TIMESTAMPTZ) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_user_detail(UUID) TO service_role;

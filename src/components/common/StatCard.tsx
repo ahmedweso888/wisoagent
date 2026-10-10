@@ -22,7 +22,7 @@ export function StatCard({
   }[tone];
 
   return (
-    <div className={cn("surface-panel p-4 sm:p-5", className)}>
+    <div className={cn("surface-panel border-t-2 border-t-primary/30 p-4 sm:p-5", className)}>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className={cn("num mt-2 font-display text-2xl font-bold sm:text-3xl", toneClass)}>
         {value}

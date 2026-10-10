@@ -10,13 +10,9 @@ export const validationAgent = {
     return callAgent("validation", () => aiValidateQuestion({ data: { question } }));
   },
 
-  async validateBatch(
-    questions: GeneratedQuestion[],
-  ): Promise<AiResult<ValidationReport[]>> {
+  async validateBatch(questions: GeneratedQuestion[]): Promise<AiResult<ValidationReport[]>> {
     return callAgent("validation", async () =>
-      Promise.all(
-        questions.map((question) => aiValidateQuestion({ data: { question } })),
-      ),
+      Promise.all(questions.map((question) => aiValidateQuestion({ data: { question } }))),
     );
   },
 };

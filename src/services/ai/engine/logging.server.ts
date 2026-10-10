@@ -24,6 +24,7 @@ export type LogContext = {
   questionsRejected?: number;
   retries?: number;
   escalations?: number;
+  rounds?: number;
   error?: string;
 };
 

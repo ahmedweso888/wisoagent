@@ -1,22 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+
 import { toast } from "sonner";
 
-import { supabase } from "@/integrations/supabase/client";
+import { adminGetAiSettings, adminUpdateAiSettings } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MODEL_CATALOG, normalizeModelId, PROVIDER_LABELS } from "@/services/ai/config";
+import { PROVIDER_LABELS } from "@/services/ai/config";
 import type { Database } from "@/integrations/supabase/types";
+import { PageHeader } from "@/components/common/PageHeader";
+import { Badge } from "@/components/ui/badge";
 
 type AiSettings = Database["public"]["Tables"]["ai_settings"]["Row"];
 
@@ -39,32 +34,22 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 });
 
 function statusOf(s: AiSettings) {
-  if (s.ai_emergency_disabled)
-    return { label: "متوقف — إيقاف طوارئ", tone: "text-destructive" };
-  if (!s.enabled || !s.ai_mode_enabled)
-    return { label: "متوقف", tone: "text-muted-foreground" };
+  if (s.ai_emergency_disabled) return { label: "متوقف — إيقاف طوارئ", tone: "text-destructive" };
+  if (!s.enabled || !s.ai_mode_enabled) return { label: "متوقف", tone: "text-muted-foreground" };
   return { label: "يعمل", tone: "text-primary" };
 }
 
 function AdminAiSettingsPage() {
   const queryClient = useQueryClient();
-  const [model, setModel] = useState<string>("");
 
   const settingsQuery = useQuery({
     queryKey: ["admin", "ai-settings"],
     queryFn: async (): Promise<AiSettings> => {
-      const { data, error } = await supabase.from("ai_settings").select("*").maybeSingle();
-      if (error) throw error;
-      if (!data) throw new Error("لا توجد إعدادات ذكاء اصطناعي.");
-      return data;
+      return adminGetAiSettings();
     },
   });
 
   const settings = settingsQuery.data;
-
-  useEffect(() => {
-    if (settings) setModel(normalizeModelId(settings.model));
-  }, [settings]);
 
   const update = useMutation({
     mutationFn: async (patch: {
@@ -73,9 +58,7 @@ function AdminAiSettingsPage() {
       _ai_emergency_disabled?: boolean;
       _enabled?: boolean;
     }): Promise<AiSettings> => {
-      const { data, error } = await supabase.rpc("admin_update_ai_settings", patch);
-      if (error) throw error;
-      return data as unknown as AiSettings;
+      return adminUpdateAiSettings({ data: patch }) as Promise<AiSettings>;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["admin", "ai-settings"], data);
@@ -89,7 +72,7 @@ function AdminAiSettingsPage() {
 
   if (settingsQuery.isPending) {
     return (
-      <main dir="rtl" className="mx-auto max-w-2xl space-y-4 px-6 py-14">
+      <main dir="rtl" className="page-shell max-w-5xl space-y-4">
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-32 w-full" />
       </main>
@@ -100,7 +83,7 @@ function AdminAiSettingsPage() {
     const message =
       settingsQuery.error instanceof Error ? settingsQuery.error.message : "خطأ غير معروف";
     return (
-      <main dir="rtl" className="mx-auto max-w-2xl px-6 py-14">
+      <main dir="rtl" className="page-shell max-w-5xl">
         <h1 className="font-display text-2xl font-bold">إعدادات ذكاء WISO</h1>
         <p className="mt-3 text-sm text-destructive">
           {message.includes("permission") || message.includes("forbidden")
@@ -116,19 +99,28 @@ function AdminAiSettingsPage() {
 
   const status = statusOf(settings);
   const saving = update.isPending;
-  const currentModel = normalizeModelId(settings.model);
 
   return (
-    <main dir="rtl" className="mx-auto max-w-2xl px-6 py-14">
-      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-5">
-        <div>
-          <h1 className="font-display text-2xl font-bold">إعدادات ذكاء WISO</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{PROVIDER_LABELS.openai}</p>
-        </div>
-        <span className={`text-sm font-semibold ${status.tone}`}>الحالة: {status.label}</span>
-      </header>
+    <main dir="rtl" className="page-shell max-w-5xl">
+      <PageHeader
+        title="إعدادات ذكاء WISO"
+        subtitle={PROVIDER_LABELS.openai}
+        actions={
+          <Badge
+            variant={
+              settings.ai_emergency_disabled
+                ? "destructive"
+                : settings.enabled
+                  ? "default"
+                  : "secondary"
+            }
+          >
+            الحالة: {status.label}
+          </Badge>
+        }
+      />
 
-      <section className="divide-y divide-border">
+      <section className="surface-panel mt-7 divide-y divide-border px-5">
         <div className="flex items-center justify-between gap-6 py-5">
           <div>
             <Label htmlFor="ai-enabled" className="text-base">
@@ -166,32 +158,12 @@ function AdminAiSettingsPage() {
         </div>
 
         <div className="py-5">
-          <Label htmlFor="ai-model" className="text-base">
-            النموذج
-          </Label>
-          <p className="mt-1 text-sm text-muted-foreground">
-            عائلة GPT-5.6 الموحّدة المستخدمة في كل مهام WISO.
+          <Label className="text-base">التوجيه الذكي</Label>
+          <p className="mt-1 text-sm leading-7 text-muted-foreground">
+            لا يختار المشرف أو الطالب نموذجاً بعينه. WISO يوجّه المهمة داخلياً إلى Luna أو Terra أو
+            Sol حسب نوعها وصعوبتها. «تعجيزي» يذهب مباشرة إلى Sol، والمهام الثقيلة الخاصة بالمعالجة
+            تذهب إلى Luna.
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Select value={model || currentModel} onValueChange={setModel} disabled={saving}>
-              <SelectTrigger id="ai-model" className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MODEL_CATALOG.openai.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              disabled={saving || (model || currentModel) === currentModel}
-              onClick={() => update.mutate({ _model: model || currentModel })}
-            >
-              {saving ? "جاري الحفظ…" : "حفظ النموذج"}
-            </Button>
-          </div>
         </div>
       </section>
 

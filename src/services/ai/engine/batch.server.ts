@@ -1,30 +1,16 @@
 /**
- * WISO Batch Generation Orchestrator.
+ * WISO question-generation completion loop.
  *
- * Splits large requests into sub-batches, routes each sub-batch through the
- * intelligent router, generates via the provider, validates through the
- * validation gate, deduplicates, and performs replacement rounds until the
- * requested count is reached or retry limits are exhausted.
- *
- * Pipeline per sub-batch:
- *   route → generate → validate → dedup → approve/reject
- *
- * Escalation for hard questions:
- *   Terra generate → validate → if invalid → Terra retry → validate
- *   → if still invalid → Sol generate replacement → validate → accept/discard
- *
- * تعجيزi/nightmare → Sol directly, no Terra detour.
+ * The completion condition is accepted >= requested. Generation/rejection
+ * counts never masquerade as success. Existing questions are part of the
+ * deduplication set, so the engine cannot approve a near-duplicate that is
+ * already in the Question Bank or was already accepted in this request.
  */
 import { routeTask } from "./router.server";
 import { validationGate } from "./validation-gate.server";
-import { deduplicateBatch } from "./dedup.server";
+import { isDuplicate } from "./dedup.server";
 import { generateRequestId, logAiEvent } from "./logging.server";
-import {
-  ENGINE_CONFIG,
-  type DifficultyLevel,
-  type TaskType,
-  type TierId,
-} from "./config";
+import { ENGINE_CONFIG, TIER_MODEL_MAP, type DifficultyLevel, type TierId } from "./config";
 import type { GeneratedQuestion, QuestionGenerationRequest } from "../types";
 
 export type BatchResult = {
@@ -43,7 +29,9 @@ export type BatchStats = {
   duplicates: number;
   retries: number;
   escalations: number;
+  replacementCount: number;
   rounds: number;
+  remaining: number;
 };
 
 type GenerateFn = (
@@ -53,33 +41,18 @@ type GenerateFn = (
   count: number,
 ) => Promise<GeneratedQuestion[]>;
 
-type ValidateFn = (
-  question: GeneratedQuestion,
-) => Promise<{ passed: boolean } | null>;
+type ValidateFn = (question: GeneratedQuestion) => Promise<{ passed: boolean } | null>;
 
-/**
- * Orchestrates batch question generation with routing, validation, dedup,
- * and replacement rounds.
- *
- * @param request  - The original generation request
- * @param existingQuestions - Already-approved questions for dedup comparison
- * @param generateFn - Provider-level generation function (injected for testability)
- * @param validateFn - Optional LLM validation function (injected for testability)
- * @param autoRoutingEnabled - Whether the router should tier-route
- * @param fallbackModel - Model when auto-routing is off
- */
 export async function generateBatch(
   request: QuestionGenerationRequest,
   existingQuestions: GeneratedQuestion[],
   generateFn: GenerateFn,
   validateFn: ValidateFn | null,
-  autoRoutingEnabled: boolean,
-  fallbackModel: string,
+  requestId = generateRequestId(),
 ): Promise<BatchResult> {
-  const requestId = generateRequestId();
-  const batchSize = ENGINE_CONFIG.batchSize;
-  const maxRounds = ENGINE_CONFIG.maxReplacementRounds;
-
+  const difficulty = request.difficulties[0] as DifficultyLevel | undefined;
+  const approved: GeneratedQuestion[] = [];
+  const rejected: GeneratedQuestion[] = [];
   const stats: BatchStats = {
     requested: request.count,
     generated: 0,
@@ -89,180 +62,168 @@ export async function generateBatch(
     duplicates: 0,
     retries: 0,
     escalations: 0,
+    replacementCount: 0,
     rounds: 0,
+    remaining: request.count,
   };
 
-  let approved: GeneratedQuestion[] = [];
-  let rejected: GeneratedQuestion[] = [];
-  let toGenerate = request.count;
+  const duplicatePool = () => [...existingQuestions, ...approved];
 
-  for (let round = 0; round < maxRounds && toGenerate > 0; round++) {
-    stats.rounds = round + 1;
+  const accept = (question: GeneratedQuestion): boolean => {
+    if (isDuplicate(question, duplicatePool()).isDuplicate) {
+      stats.duplicates++;
+      stats.rejected++;
+      rejected.push(question);
+      return false;
+    }
+    approved.push(question);
+    return true;
+  };
 
-    // Split into sub-batches
-    const subBatchCount = Math.min(batchSize, toGenerate);
-    const subBatches = Math.ceil(toGenerate / batchSize);
+  const validateAndAccept = async (question: GeneratedQuestion): Promise<boolean> => {
+    stats.validated++;
+    const llmResult = validateFn ? await validateFn(question) : null;
+    const gate = await validationGate(
+      question,
+      difficulty ?? "medium",
+      duplicatePool(),
+      [],
+      llmResult ? { passed: llmResult.passed, checks: [] } : null,
+    );
+    if (!gate.valid) {
+      if (gate.reasons.some((reason) => reason.startsWith("duplicate"))) stats.duplicates++;
+      stats.rejected++;
+      rejected.push(question);
+      return false;
+    }
+    return accept(question);
+  };
 
-    const roundQuestions: GeneratedQuestion[] = [];
+  for (let round = 1; round <= ENGINE_CONFIG.maxReplacementRounds; round++) {
+    const remainingBefore = request.count - approved.length;
+    if (remainingBefore <= 0) break;
+    stats.rounds = round;
 
-    for (let b = 0; b < subBatches; b++) {
-      const currentBatchSize = Math.min(batchSize, toGenerate - b * batchSize);
-      if (currentBatchSize <= 0) break;
+    const chunks = Math.ceil(remainingBefore / ENGINE_CONFIG.batchSize);
+    for (let chunk = 0; chunk < chunks; chunk++) {
+      const count = Math.min(ENGINE_CONFIG.batchSize, request.count - approved.length);
+      if (count <= 0) break;
 
       const subRequest: QuestionGenerationRequest = {
         ...request,
-        count: currentBatchSize,
-        excludeQuestionIds: [
-          ...(request.excludeQuestionIds ?? []),
-          ...approved.map((_, i) => `gen_${i}`),
-        ],
+        count,
+        ...(request.excludeQuestionIds ? { excludeQuestionIds: request.excludeQuestionIds } : {}),
       };
-
-      // Determine difficulty for this sub-batch (use first difficulty from request)
-      const difficulty = request.difficulties[0] as DifficultyLevel | undefined;
-
       const routing = routeTask({
-        taskType: "questions" as TaskType,
-        difficulty,
-        autoRoutingEnabled,
-        fallbackModel,
+        taskType: "question_generation",
+        ...(difficulty ? { difficulty } : {}),
       });
-
       logAiEvent({
         requestId,
-        taskType: "questions",
+        taskType: "question_generation",
         tier: routing.tier,
         model: routing.model,
         status: "generating",
-        questionsGenerated: currentBatchSize,
+        questionsGenerated: count,
+        rounds: round,
       });
 
-      // Generate
       let generated: GeneratedQuestion[] = [];
       try {
-        generated = await generateFn(routing.tier, routing.model, subRequest, currentBatchSize);
-        stats.generated += generated.length;
+        generated = await generateFn(routing.tier, routing.model, subRequest, count);
       } catch (error) {
         logAiEvent({
           requestId,
-          taskType: "questions",
+          taskType: "question_generation",
           tier: routing.tier,
+          model: routing.model,
           status: "error",
           error: error instanceof Error ? error.message : String(error),
         });
         continue;
       }
+      stats.generated += generated.length;
 
-      // Validate each question
       for (const question of generated) {
-        stats.validated++;
+        const passed = await validateAndAccept(question);
+        if (passed) continue;
 
-        const llmResult = validateFn ? await validateFn(question) : null;
-        const gateResult = await validationGate(
-          question,
-          difficulty ?? "medium",
-          existingQuestions,
-          roundQuestions,
-          llmResult && "passed" in llmResult ? llmResult : null,
-        );
-
-        if (gateResult.valid) {
-          roundQuestions.push(question);
-        } else {
-          stats.rejected++;
-          rejected.push(question);
-
-          // Retry logic for Terra-routed difficulties
-          if (
-            gateResult.retryRecommended &&
-            difficulty &&
-            (difficulty === "basic" || difficulty === "medium" || difficulty === "hard")
-          ) {
-            stats.retries++;
-            // Terra retry
-            try {
-              const retryRequest: QuestionGenerationRequest = {
-                ...subRequest,
-                count: 1,
-              };
-              const retryQ = await generateFn("terra", fallbackModel, retryRequest, 1);
-              if (retryQ.length > 0) {
-                const retryGate = await validationGate(
-                  retryQ[0],
-                  difficulty,
-                  existingQuestions,
-                  roundQuestions,
-                  null,
-                );
-                if (retryGate.valid) {
-                  roundQuestions.push(retryQ[0]);
-                  stats.generated++;
-                } else {
-                  // Escalate to Sol
-                  if (gateResult.escalationRecommended || retryGate.escalationRecommended) {
-                    stats.escalations++;
-                    try {
-                      const solRequest: QuestionGenerationRequest = {
-                        ...subRequest,
-                        count: 1,
-                      };
-                      const solQ = await generateFn("sol", "openai/gpt-5.6-sol", solRequest, 1);
-                      if (solQ.length > 0) {
-                        const solGate = await validationGate(
-                          solQ[0],
-                          difficulty,
-                          existingQuestions,
-                          roundQuestions,
-                          null,
-                        );
-                        if (solGate.valid) {
-                          roundQuestions.push(solQ[0]);
-                          stats.generated++;
-                        } else {
-                          // Discard
-                          rejected.push(solQ[0]);
-                        }
-                      }
-                    } catch {
-                      // Sol generation failed — discard
-                    }
-                  }
-                }
-              }
-            } catch {
-              // Retry failed — continue
+        // Hard: exactly one Terra retry, then Sol replacement if needed.
+        if (difficulty === "hard") {
+          stats.retries++;
+          stats.replacementCount++;
+          try {
+            const retry = await generateFn(
+              "terra",
+              TIER_MODEL_MAP.terra,
+              { ...subRequest, count: 1 },
+              1,
+            );
+            stats.generated += retry.length;
+            const retryQuestion = retry[0];
+            if (retryQuestion) {
+              if (await validateAndAccept(retryQuestion)) continue;
             }
+          } catch {
+            // Escalation below is still allowed.
+          }
+
+          stats.escalations++;
+          stats.replacementCount++;
+          try {
+            const replacement = await generateFn(
+              "sol",
+              TIER_MODEL_MAP.sol,
+              { ...subRequest, count: 1 },
+              1,
+            );
+            stats.generated += replacement.length;
+            if (replacement[0]) await validateAndAccept(replacement[0]);
+          } catch {
+            // The round will calculate the remaining count and retry safely.
+          }
+        } else if (difficulty === "very_hard" || difficulty === "nightmare") {
+          // Extreme questions are Sol-direct. A single Sol replacement is safe.
+          stats.retries++;
+          stats.replacementCount++;
+          try {
+            const replacement = await generateFn(
+              "sol",
+              TIER_MODEL_MAP.sol,
+              { ...subRequest, count: 1 },
+              1,
+            );
+            stats.generated += replacement.length;
+            if (replacement[0]) await validateAndAccept(replacement[0]);
+          } catch {
+            // Continue to next replacement round.
           }
         }
       }
     }
 
-    // Deduplicate within this round and against existing
-    const { unique, duplicates: dups } = deduplicateBatch(roundQuestions);
-    stats.duplicates += dups.length;
-    approved.push(...unique);
-    toGenerate = request.count - approved.length;
-
+    stats.approved = approved.length;
+    stats.remaining = Math.max(0, request.count - approved.length);
     logAiEvent({
       requestId,
-      taskType: "questions",
+      taskType: "question_generation",
       status: "round_complete",
-      questionsApproved: approved.length,
+      questionsGenerated: stats.generated,
+      questionsApproved: stats.approved,
       questionsRejected: stats.rejected,
       retries: stats.retries,
       escalations: stats.escalations,
       rounds: stats.rounds,
     });
-
-    if (toGenerate <= 0) break;
+    if (stats.remaining === 0) break;
   }
 
   stats.approved = approved.length;
-
+  stats.remaining = Math.max(0, request.count - approved.length);
   logAiEvent({
     requestId,
-    taskType: "questions",
-    status: "batch_complete",
+    taskType: "question_generation",
+    status: stats.remaining === 0 ? "batch_complete" : "batch_partial",
     questionsGenerated: stats.generated,
     questionsApproved: stats.approved,
     questionsRejected: stats.rejected,
@@ -270,6 +231,5 @@ export async function generateBatch(
     escalations: stats.escalations,
     rounds: stats.rounds,
   });
-
   return { requestId, approved, rejected, stats };
 }

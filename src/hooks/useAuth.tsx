@@ -40,9 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       access: accessQuery.data ?? null,
       isAdmin: adminQuery.data ?? false,
       isAuthenticated: Boolean(user),
-      loading:
-        !ready ||
-        (Boolean(user) && (profileQuery.isPending || accessQuery.isPending)),
+      loading: !ready || (Boolean(user) && (profileQuery.isPending || accessQuery.isPending)),
       signOut: () => signOutEverywhere(queryClient),
     }),
     [

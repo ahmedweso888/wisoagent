@@ -1,10 +1,7 @@
 import type { AgentName, AiResult } from "./types";
 
 /** Wraps a secure server-function call into the agents' AiResult contract. */
-export async function callAgent<T>(
-  agent: AgentName,
-  run: () => Promise<T>,
-): Promise<AiResult<T>> {
+export async function callAgent<T>(agent: AgentName, run: () => Promise<T>): Promise<AiResult<T>> {
   try {
     return { status: "ok", agent, data: await run() };
   } catch (error) {

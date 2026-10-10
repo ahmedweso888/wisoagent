@@ -6,9 +6,7 @@ import type { AiResult, MistakeAnalysis, MistakeAnalysisRequest } from "./types"
 export const mistakesAgent = {
   name: "mistakes" as const,
 
-  async analyze(
-    request: MistakeAnalysisRequest,
-  ): Promise<AiResult<MistakeAnalysis[]>> {
+  async analyze(request: MistakeAnalysisRequest): Promise<AiResult<MistakeAnalysis[]>> {
     return callAgent("mistakes", () => aiAnalyzeMistakes({ data: request }));
   },
 };

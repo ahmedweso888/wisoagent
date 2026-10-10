@@ -11,7 +11,7 @@
  * Prevents: negative balances, double charging, concurrent race conditions,
  * duplicate reservations, charging failed requests, cross-student charging.
  */
-import { supabase } from "@/integrations/supabase/client";
+import { getUserSupabase } from "@/integrations/supabase/user-client.server";
 
 export type ResourceType = "questions" | "images" | "pdfs" | "documents";
 
@@ -32,7 +32,7 @@ export async function reserveCredits(
   resourceType: ResourceType,
   amount: number,
 ): Promise<Reservation> {
-  const { data, error } = await supabase.rpc("reserve_ai_credits", {
+  const { data, error } = await getUserSupabase().rpc("reserve_ai_credits", {
     _request_id: requestId,
     _resource_type: resourceType,
     _amount: amount,
@@ -57,9 +57,10 @@ export async function reserveCredits(
 }
 
 /** Commits a reservation — the AI call succeeded, usage is final. */
-export async function commitCredits(reservationId: string): Promise<void> {
-  const { error } = await supabase.rpc("commit_ai_credits", {
+export async function commitCredits(reservationId: string, actualAmount?: number): Promise<void> {
+  const { error } = await getUserSupabase().rpc("commit_ai_credits", {
     _reservation_id: reservationId,
+    ...(actualAmount === undefined ? {} : { _actual_amount: actualAmount }),
   });
   if (error) {
     throw new Error(`credit_commit_failed: ${error.message}`);
@@ -68,7 +69,7 @@ export async function commitCredits(reservationId: string): Promise<void> {
 
 /** Releases a reservation — the AI call failed, quota returned. */
 export async function releaseCredits(reservationId: string): Promise<void> {
-  const { error } = await supabase.rpc("release_ai_credits", {
+  const { error } = await getUserSupabase().rpc("release_ai_credits", {
     _reservation_id: reservationId,
   });
   if (error) {

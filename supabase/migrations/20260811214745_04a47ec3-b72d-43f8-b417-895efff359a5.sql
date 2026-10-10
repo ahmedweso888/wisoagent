@@ -1,12 +1,12 @@
 -- AI settings (no secrets stored here)
 create table if not exists public.ai_settings (
   id boolean primary key default true check (id),
-  provider text not null default 'gemini' check (provider in ('gemini','openai','anthropic')),
-  model text not null default 'google/gemini-2.5-flash',
-  temperature numeric not null default 0.7 check (temperature >= 0 and temperature <= 2),
+  provider text not null default 'openai' check (provider = 'openai'),
+  model text not null default 'openai/gpt-5.6-sol',
+  temperature numeric not null default 1 check (temperature >= 0 and temperature <= 2),
   max_tokens integer not null default 4096 check (max_tokens > 0),
   fallback_enabled boolean not null default false,
-  fallback_provider text check (fallback_provider in ('gemini','openai','anthropic')),
+  fallback_provider text check (fallback_provider = 'openai'),
   daily_request_limit integer not null default 200,
   monthly_request_limit integer not null default 3000,
   daily_question_limit integer not null default 300,

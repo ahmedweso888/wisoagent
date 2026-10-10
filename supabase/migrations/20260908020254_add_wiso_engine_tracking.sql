@@ -34,17 +34,12 @@ quota before an AI call. Status transitions: reserved → committed | released.
 - `created_at`, `updated_at` (timestamptz)
 - `committed_at`, `released_at` (timestamptz, nullable)
 
-### 3. `reserve_ai_credits()` — new SECURITY DEFINER function
-Atomically checks daily usage + existing reservations against the plan limit,
-then inserts a reservation row. Returns the reservation id or raises on
-quota exceeded. Prevents race conditions via SELECT ... FOR UPDATE on the
-usage aggregate.
-
-### 4. `commit_ai_credits()` — new SECURITY DEFINER function
-Marks a reservation as committed (the AI call succeeded, usage is final).
-
-### 5. `release_ai_credits()` — new SECURITY DEFINER function
-Marks a reservation as released (the AI call failed, quota returned).
+### 3-5. Credit reservation / commit / release
+Originally defined here on the deprecated Lovable `student_subscriptions`
+plan-limit architecture; removed in the legacy-migration cleanup. The current
+WISO wallet-based `reserve_ai_credits` / `commit_ai_credits` /
+`release_ai_credits` (student_wallets + wallet_ledger) are defined in
+20260911013941, 20260915115614 and 20260918015108.
 
 ### 6. Indexes
 - `idx_ai_usage_tier_day` on ai_usage_logs(user_id, tier, created_at)
@@ -130,153 +125,14 @@ CREATE POLICY "credit_res_read_own" ON public.ai_credit_reservations
 -- No direct INSERT/UPDATE/DELETE policies — all mutations via SECURITY DEFINER functions
 
 -- ═══════════════════════════════════════════
--- 3. Atomic reservation function
+-- 3-5. Credit reservation / commit / release
 -- ═══════════════════════════════════════════
+-- Removed during the legacy-migration cleanup: the original definitions here
+-- were built on the deprecated Lovable `student_subscriptions` architecture
+-- (plan-level daily limits). The current WISO wallet-based implementations
+-- (reserve/commit/release against student_wallets + wallet_ledger) are defined
+-- in 20260911013941, 20260915115614 and 20260918015108.
 
-CREATE OR REPLACE FUNCTION public.reserve_ai_credits(
-  _request_id text,
-  _resource_type text,
-  _amount integer
-)
-RETURNS uuid
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $function$
-DECLARE
-  _uid uuid := auth.uid();
-  _sub public.student_subscriptions;
-  _plan public.subscription_plans;
-  _used integer;
-  _reserved integer;
-  _limit integer;
-  _res_id uuid;
-BEGIN
-  IF _uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
-  IF _amount <= 0 THEN RAISE EXCEPTION 'invalid amount'; END IF;
-  IF _resource_type NOT IN ('questions','images','pdfs','documents') THEN
-    RAISE EXCEPTION 'invalid resource type'; END IF;
-
-  -- Find active subscription
-  SELECT * INTO _sub FROM public.student_subscriptions
-   WHERE student_id = _uid AND status = 'active'
-     AND (expires_at IS NULL OR expires_at > now())
-   ORDER BY activated_at DESC LIMIT 1;
-
-  IF NOT FOUND THEN
-    IF NOT public.has_role(_uid, 'admin') THEN
-      RAISE EXCEPTION 'no active subscription';
-    END IF;
-  END IF;
-
-  -- Get plan limits (admins bypass limits)
-  IF _sub.id IS NOT NULL THEN
-    SELECT * INTO _plan FROM public.subscription_plans WHERE id = _sub.plan_id;
-  END IF;
-
-  _limit := CASE _resource_type
-    WHEN 'questions' THEN COALESCE(_plan.daily_question_limit, 999999)
-    WHEN 'images'   THEN COALESCE(_plan.daily_image_limit, 999999)
-    WHEN 'pdfs'     THEN COALESCE(_plan.daily_pdf_limit, 999999)
-    WHEN 'documents' THEN 999999
-  END;
-
-  IF public.has_role(_uid, 'admin') THEN
-    _limit := 999999;
-  END IF;
-
-  -- Count today's committed usage
-  SELECT COALESCE(sum(
-    CASE _resource_type
-      WHEN 'questions' THEN questions_generated
-      WHEN 'images'    THEN images_analyzed
-      WHEN 'pdfs'      THEN documents_analyzed
-      WHEN 'documents' THEN documents_analyzed
-    END
-  ), 0)
-    INTO _used
-    FROM public.ai_usage_logs
-   WHERE user_id = _uid AND status = 'ok' AND created_at >= date_trunc('day', now());
-
-  -- Count active reservations (reserved but not yet committed/released)
-  SELECT COALESCE(sum(amount), 0) INTO _reserved
-    FROM public.ai_credit_reservations
-   WHERE user_id = _uid AND status = 'reserved'
-     AND resource_type = _resource_type
-     AND created_at >= date_trunc('day', now());
-
-  IF _used + _reserved + _amount > _limit THEN
-    RAISE EXCEPTION 'quota_exceeded: used=%, reserved=%, requested=%, limit=%',
-      _used, _reserved, _amount, _limit;
-  END IF;
-
-  INSERT INTO public.ai_credit_reservations
-    (user_id, request_id, resource_type, amount, status)
-  VALUES (_uid, _request_id, _resource_type, _amount, 'reserved')
-  RETURNING id INTO _res_id;
-
-  RETURN _res_id;
-END;
-$function$;
-
-REVOKE ALL ON FUNCTION public.reserve_ai_credits(text, text, integer) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.reserve_ai_credits(text, text, integer) TO authenticated;
-
--- ═══════════════════════════════════════════
--- 4. Commit reservation
--- ═══════════════════════════════════════════
-
-CREATE OR REPLACE FUNCTION public.commit_ai_credits(_reservation_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $function$
-DECLARE
-  _uid uuid := auth.uid();
-BEGIN
-  IF _uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
-
-  UPDATE public.ai_credit_reservations
-     SET status = 'committed', committed_at = now(), updated_at = now()
-   WHERE id = _reservation_id
-     AND user_id = _uid
-     AND status = 'reserved';
-
-  IF NOT FOUND THEN RAISE EXCEPTION 'reservation not found or not reservable'; END IF;
-END;
-$function$;
-
-REVOKE ALL ON FUNCTION public.commit_ai_credits(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.commit_ai_credits(uuid) TO authenticated;
-
--- ═══════════════════════════════════════════
--- 5. Release reservation
--- ═══════════════════════════════════════════
-
-CREATE OR REPLACE FUNCTION public.release_ai_credits(_reservation_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $function$
-DECLARE
-  _uid uuid := auth.uid();
-BEGIN
-  IF _uid IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
-
-  UPDATE public.ai_credit_reservations
-     SET status = 'released', released_at = now(), updated_at = now()
-   WHERE id = _reservation_id
-     AND user_id = _uid
-     AND status = 'reserved';
-
-  IF NOT FOUND THEN RAISE EXCEPTION 'reservation not found or not releasable'; END IF;
-END;
-$function$;
-
-REVOKE ALL ON FUNCTION public.release_ai_credits(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.release_ai_credits(uuid) TO authenticated;
 
 -- ═══════════════════════════════════════════
 -- 6. Admin: tier usage stats

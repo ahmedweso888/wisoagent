@@ -63,13 +63,13 @@ export function validateQuestionStructure(
 
   // 1. Prompt present and non-trivial
   const promptOk = Boolean(question.prompt && question.prompt.trim().length >= MIN_PROMPT_LENGTH);
-  checks.prompt_present = promptOk;
+  checks["prompt_present"] = promptOk;
   if (!promptOk) reasons.push("prompt_missing_or_too_short");
   if (promptOk) passedCount++;
 
   // 2. Correct answer present
   const answerOk = Boolean(question.correctAnswer && question.correctAnswer.trim().length > 0);
-  checks.answer_present = answerOk;
+  checks["answer_present"] = answerOk;
   if (!answerOk) reasons.push("correct_answer_missing");
   if (answerOk) passedCount++;
 
@@ -77,45 +77,49 @@ export function validateQuestionStructure(
   const explanationOk = Boolean(
     question.explanation && question.explanation.trim().length >= MIN_EXPLANATION_LENGTH,
   );
-  checks.explanation_quality = explanationOk;
+  checks["explanation_quality"] = explanationOk;
   if (!explanationOk) reasons.push("explanation_too_short_or_missing");
   if (explanationOk) passedCount++;
 
   // 4. Difficulty score in expected range
   const [minScore, maxScore] = DIFFICULTY_SCORE_RANGES[difficulty] ?? [0, 100];
-  const difficultyOk =
-    question.difficultyScore >= minScore && question.difficultyScore <= maxScore;
-  checks.difficulty_score_range = difficultyOk;
-  if (!difficultyOk) reasons.push(`difficulty_score_${question.difficultyScore}_out_of_range_${minScore}_${maxScore}`);
+  const difficultyOk = question.difficultyScore >= minScore && question.difficultyScore <= maxScore;
+  checks["difficulty_score_range"] = difficultyOk;
+  if (!difficultyOk)
+    reasons.push(
+      `difficulty_score_${question.difficultyScore}_out_of_range_${minScore}_${maxScore}`,
+    );
   if (difficultyOk) passedCount++;
 
   // 5. Concepts tested non-empty
   const conceptsOk = Array.isArray(question.conceptsTested) && question.conceptsTested.length > 0;
-  checks.concepts_present = conceptsOk;
+  checks["concepts_present"] = conceptsOk;
   if (!conceptsOk) reasons.push("no_concepts_tested");
   if (conceptsOk) passedCount++;
 
   // 6. Options valid for MCQ-type questions
   let optionsOk = true;
   if (question.options && question.options.length > 0) {
-    optionsOk = question.options.length >= 2 && question.options.some(
-      (opt) => opt.key === question.correctAnswer || opt.text === question.correctAnswer,
-    );
+    optionsOk =
+      question.options.length >= 2 &&
+      question.options.some(
+        (opt) => opt.key === question.correctAnswer || opt.text === question.correctAnswer,
+      );
   }
-  checks.options_valid = optionsOk;
+  checks["options_valid"] = optionsOk;
   if (!optionsOk) reasons.push("options_invalid_or_no_matching_answer");
   if (optionsOk) passedCount++;
 
   // 7. Source references present (at least one)
   const sourcesOk =
     Array.isArray(question.sourceReferences) && question.sourceReferences.length > 0;
-  checks.source_references = sourcesOk;
+  checks["source_references"] = sourcesOk;
   if (!sourcesOk) reasons.push("no_source_references");
   if (sourcesOk) passedCount++;
 
   // 8. Common trap present (educational quality signal)
   const trapOk = Boolean(question.commonTrap && question.commonTrap.trim().length > 0);
-  checks.common_trap = trapOk;
+  checks["common_trap"] = trapOk;
   if (!trapOk) reasons.push("no_common_trap");
   if (trapOk) passedCount++;
 
@@ -150,17 +154,17 @@ export async function validationGate(
   const dup = isDuplicate(question, [...existingQuestions, ...batchQuestions]);
   if (dup.isDuplicate) {
     structural.valid = false;
-    structural.checks.not_duplicate = false;
+    structural.checks["not_duplicate"] = false;
     structural.reasons.push(`duplicate: ${dup.reason}`);
     structural.retryRecommended = false;
     structural.escalationRecommended = false;
   } else {
-    structural.checks.not_duplicate = true;
+    structural.checks["not_duplicate"] = true;
   }
 
   // LLM validation (if provided)
   if (llmValidation) {
-    structural.checks.llm_validated = llmValidation.passed;
+    structural.checks["llm_validated"] = llmValidation.passed;
     if (!llmValidation.passed) {
       structural.valid = false;
       structural.reasons.push("llm_validation_failed");

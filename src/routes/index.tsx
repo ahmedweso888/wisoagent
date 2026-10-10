@@ -1,194 +1,736 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import {
-  BrainCircuit,
-  CalendarClock,
-  Flame,
-  ShieldCheck,
-  Skull,
-  Target,
-} from "lucide-react";
+import { ArrowLeft, BadgeCheck, Check } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { DeadlineCountdown } from "@/components/common/DeadlineCountdown";
+import laptopAsset from "@/assets/wiso-laptop.png";
 import { Footer } from "@/components/common/Footer";
-import { SYLLABUS_DEADLINE } from "@/lib/constants";
-import { countdownTo } from "@/lib/format";
+import { SiteHeader, type HeaderLink } from "@/components/common/SiteHeader";
+import { Button } from "@/components/ui/button";
+import {
+  useFaq,
+  useFeatureFlags,
+  usePublicContest,
+  usePublicPlans,
+  useSectionMap,
+  useTeachers,
+  type SiteSection,
+} from "@/hooks/useSiteContent";
+import { toArabicSafeNumber } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Study Agent — اقفل المنهج واكسر الأسئلة الصعبة" },
+      {
+        title: "wiso agent - ويسو إيجنت",
+      },
       {
         name: "description",
         content:
-          "خطة معركة لحد 1 يناير 2027، أسئلة تقيلة بالجملة، وتحليل لكل غلطة عندك. مش منصة مذاكرة عادية.",
+          "مش مجرد أسئلة وخلاص. WISO بيفهم منهجك، بيظبطلك خطة مذاكرة، وبيعرفك إيه اللي ناقصك وبيحتاج شغل.",
       },
-      { property: "og:title", content: "Study Agent — مركز قيادة المذاكرة" },
+      {
+        property: "og:title",
+        content: "WISO Agent — مذاكرتك على مزاج مستواك",
+      },
       {
         property: "og:description",
-        content: "اقفل المنهج في وقته، وبعدها ابدأ تكسر أصعب الأسئلة.",
+        content:
+          "خطة مذاكرة، أسئلة، تحليل لأدائك، ومعرفة بنقط ضعفك — وكل ده بيتطور معاك.",
       },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      {
+        property: "og:type",
+        content: "website",
+      },
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
     ],
   }),
   component: Landing,
 });
 
-const PILLARS = [
-  {
-    icon: CalendarClock,
-    title: "خطة المعركة",
-    body: "من السنة للشهر للأسبوع لليوم لجلسة المذاكرة، وكل مهمة معاها عدد أسئلة وساعات محسوبة.",
-  },
-  {
-    icon: Flame,
-    title: "أسئلة تقيلة بالجملة",
-    body: "صعب، صعب جداً، ووضع التعجيز. الصعوبة على الفهم مش على طول السؤال.",
-  },
-  {
-    icon: Target,
-    title: "إيه اللي معطلك؟",
-    body: "كل غلطة بتتصنّف وبتترجع لك في شكل أسئلة موجّهة لحد ما النقطة تسيبك.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "مفيش أسئلة من الهوا",
-    body: "كل سؤال مربوط بمصدر من كتبك وصور حصصك، ومعاه خط تحقق كامل.",
-  },
+/** Section order and anchors are fixed in code; the copy is admin-managed. */
+const SECTION_ORDER = [
+  { key: "about", label: "عن WISO" },
+  { key: "how", label: "إزاي بيشتغل" },
+  { key: "features", label: "المميزات" },
+  { key: "teachers", label: "المدرسون" },
+  { key: "pricing", label: "الباقات" },
+  { key: "competition", label: "المسابقة" },
+  { key: "faq", label: "الأسئلة الشائعة" },
+] as const;
+
+const JOURNEY = [
+  "المنهج",
+  "الخطة",
+  "الأسئلة",
+  "الحل",
+  "تحليل الأداء",
+  "نقاط الضعف",
+  "تطوير الخطة",
 ];
 
-const MASTERY = [
-  { label: "BASIC", value: 96 },
-  { label: "HARD", value: 81 },
-  { label: "VERY HARD", value: 64 },
-  { label: "NIGHTMARE", value: 37 },
-];
+function SectionHeading({ section }: { section: SiteSection }) {
+  return (
+    <div className="max-w-2xl">
+      {section.subtitle ? (
+        <p className="text-sm font-bold text-primary">{section.subtitle}</p>
+      ) : null}
 
+      {section.title ? (
+        <h2 className="mt-3 font-display text-3xl font-black sm:text-4xl">
+          {section.title}
+        </h2>
+      ) : null}
+
+      {section.description ? (
+        <p className="mt-4 text-base leading-8 text-muted-foreground">
+          {section.description}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Reusable scroll reveal animation.
+ * Every section fades in and moves upward slightly when entering the viewport.
+ */
+function RevealSection({
+  children,
+  className = "",
+  delay = 0,
+  ...props
+}: React.ComponentPropsWithoutRef<"section"> & {
+  delay?: number;
+}) {
+  return (
+    <motion.section
+      {...props}
+      initial={{ opacity: 0, y: 45 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{
+        once: true,
+        amount: 0.15,
+      }}
+      transition={{
+        duration: 1.1,
+        delay,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      className={className}
+    >
+      {children}
+    </motion.section>
+  );
+}
 function Landing() {
-  const remaining = countdownTo(SYLLABUS_DEADLINE);
+  const { map, isLoading } = useSectionMap();
+  const teachers = useTeachers();
+  const faq = useFaq();
+  const plans = usePublicPlans();
+  const contest = usePublicContest();
+  const flags = useFeatureFlags();
+
+  const teachersVisible =
+    flags.data?.["verified_teachers"] !== false &&
+    (teachers.data?.length ?? 0) > 0;
+
+  const contestRow = contest.data as
+    | {
+        enabled?: boolean;
+        visible?: boolean;
+        prize_egp?: number;
+        currency?: string;
+      }
+    | null
+    | undefined;
+
+  const contestVisible =
+    flags.data?.["competition"] !== false &&
+    Boolean(contestRow?.enabled) &&
+    contestRow?.visible !== false;
+
+  const navLinks: HeaderLink[] = SECTION_ORDER.filter((s) => {
+    if (!map.has(s.key)) return false;
+
+    if (s.key === "teachers") return teachersVisible;
+
+    if (s.key === "competition") return contestVisible;
+
+    if (s.key === "faq") return (faq.data?.length ?? 0) > 0;
+
+    if (s.key === "pricing") return (plans.data?.length ?? 0) > 0;
+
+    return true;
+  }).map((s) => ({
+    href: `#${s.key}`,
+    label: map.get(s.key)?.subtitle || s.label,
+  }));
+
+  const hero = map.get("hero");
+  const heroTitle = hero?.title ?? "وكيلك الذكي في رحلتك نحو التفوق";
+  const heroCta = hero?.cta_label ?? "ابدأ رحلتك الآن";
 
   return (
-    <div dir="rtl" className="flex min-h-screen flex-col bg-background">
-      <div className="hero-glow flex-1">
-        <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6">
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <BrainCircuit className="size-5" />
-            </span>
-            <span className="font-display text-lg font-bold">Study Agent</span>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/auth">يلا نبدأ</Link>
-          </Button>
-        </header>
+    <div dir="rtl" className="min-h-screen bg-background text-foreground">
+      <SiteHeader links={navLinks} ctaLabel={heroCta} />
 
-        <main className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:pt-14">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
-            className="grid gap-8 lg:grid-cols-[1.35fr_1fr] lg:items-center"
-          >
-            <div>
-              <span className="glass-panel inline-flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground">
-                <Skull className="size-3.5 text-nightmare" />
-                مركز قيادة المذاكرة — مش منصة دروس
-              </span>
-              <h1 className="mt-4 max-w-2xl font-display text-3xl font-extrabold leading-[1.25] sm:text-5xl">
-                اقفل المنهج كله. وبعدها ابدأ{" "}
-                <span className="text-gradient-primary">تكسر</span> أصعب الأسئلة.
-              </h1>
-              <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
-                ارفع كتبك وصور الحصص، واحنا نطلعلك خريطة المنهج وخطة معركة بتنتهي في 1 يناير
-                2027، وبعدها أسئلة تقيلة بالجملة مع تحليل لكل غلطة.
-              </p>
+      <main className="pt-20 sm:pt-24">
+        {/* HERO */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-10">
+          <div className="relative overflow-hidden rounded-[2rem] bg-[var(--gradient-hero)] px-5 py-14 sm:px-10 sm:py-20">
+            <div className="app-grid pointer-events-none absolute inset-0 opacity-40" />
 
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Button asChild size="lg">
-                  <Link to="/auth">ابدأ التجربة المجانية 24 ساعة</Link>
-                </Button>
-                <p className="text-sm text-muted-foreground">
-                  باقي{" "}
-                  <span className="num font-semibold text-primary">{remaining.days}</span> يوم على
-                  الموعد النهائي.
-                </p>
-              </div>
-            </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-32 start-1/2 size-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl"
+            />
 
-            <DeadlineCountdown />
-          </motion.div>
-
-          <section className="mt-14 grid gap-4 sm:grid-cols-2">
-            {PILLARS.map((pillar, index) => (
-              <motion.article
-                key={pillar.title}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.4, delay: index * 0.06, ease: "easeOut" }}
-                className="surface-panel p-5 transition-colors hover:border-primary/40"
-              >
-                <span className="flex size-10 items-center justify-center rounded-xl bg-secondary text-primary">
-                  <pillar.icon className="size-5" />
-                </span>
-                <h2 className="mt-3 font-display text-lg font-bold">{pillar.title}</h2>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                  {pillar.body}
-                </p>
-              </motion.article>
-            ))}
-          </section>
-
-          <section className="surface-panel mt-6 p-6">
-            <div className="flex flex-wrap items-end justify-between gap-2">
+            <div className="relative grid items-center gap-8 lg:grid-cols-[.88fr_1.12fr] lg:text-start">
               <div>
-                <h2 className="font-display text-lg font-bold">الهدف مش إنك تحل السهل</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  الهدف إنك تبقى جاهز للصعب. كل مستوى بيتقاس لوحده.
-                </p>
-              </div>
-              <span className="num text-xs text-muted-foreground">مثال لمستوى الإتقان</span>
-            </div>
+                {hero?.subtitle ? (
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-5 inline-flex rounded-full border border-[var(--hero-border)] bg-[var(--hero-surface)] px-4 py-2 text-sm font-bold text-[var(--hero-foreground)]"
+                  >
+                    {hero.subtitle}
+                  </motion.p>
+                ) : null}
 
-            <div className="mt-5 space-y-3.5">
-              {MASTERY.map((tier, index) => (
-                <div key={tier.label}>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="num font-mono tracking-widest text-muted-foreground">
-                      {tier.label}
-                    </span>
-                    <span className="num font-semibold">{tier.value}%</span>
-                  </div>
-                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${tier.value}%` }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.9, delay: index * 0.1, ease: "easeOut" }}
-                      className="h-full rounded-full bg-primary"
-                    />
-                  </div>
-                </div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55 }}
+                  className="font-display text-4xl font-black leading-[1.22] text-[var(--hero-foreground)] sm:text-5xl lg:text-6xl"
+                >
+                  {heroTitle}
+                </motion.h1>
+
+                {hero?.description ? (
+                  <motion.p
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.55, delay: 0.06 }}
+                    className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[var(--hero-muted)] sm:text-lg"
+                  >
+                    {hero.description}
+                  </motion.p>
+                ) : null}
+
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, delay: 0.12 }}
+                  className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start"
+                >
+                  <Button asChild size="lg" className="rounded-full">
+                    <Link to={hero?.cta_href ?? "/auth"}>
+                      {heroCta}
+                      <ArrowLeft />
+                    </Link>
+                  </Button>
+
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full border-[var(--hero-border)] bg-transparent text-[var(--hero-foreground)] hover:bg-[var(--hero-surface-hover)] hover:text-[var(--hero-foreground)]"
+                  >
+                    <a href="#how">شوف WISO بيشتغل إزاي</a>
+                  </Button>
+                </motion.div>
+              </div>
+
+              <motion.img
+                initial={{ opacity: 0, y: 28 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.16 }}
+                src={laptopAsset}
+                alt="واجهة WISO على اللابتوب"
+                className="hero-laptop relative mx-auto w-full max-w-3xl object-contain drop-shadow-2xl"
+              />
+            </div>
+          </div>
+        </section>
+        <section>
+          <motion.h1
+  initial={{ opacity: 0, y: 16 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.55 }}
+  className="font-display text-4xl font-black leading-[1.15] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-white drop-shadow-[0_0_18px_rgba(255,255,255,0.35)] sm:text-5xl lg:text-7xl"
+>
+  وعشان WISO حاسس بيك
+  <br />
+  يا طالب البكالوريا
+</motion.h1>
+
+<motion.p
+  initial={{ opacity: 0, y: 16 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.55, delay: 0.06 }}
+  className="mx-auto mt-6 max-w-3xl text-lg font-extrabold leading-9 text-[var(--hero-foreground)] drop-shadow-[0_0_12px_rgba(255,255,255,0.25)] sm:text-xl lg:text-2xl"
+>
+  عملنالك{" "}
+  <span className="font-black text-cyan-300 drop-shadow-[0_0_14px_rgba(34,211,238,0.8)]">
+    SPRIX Agent
+  </span>{" "}
+  عشان تريح بالك من الثقافة المالية وتركز على باقي موادك،
+  <br />
+  وبـ <span className="font-black text-yellow-300 drop-shadow-[0_0_14px_rgba(250,204,21,0.8)]">40 ج</span>{" "}
+ يحللك مستويات الترم كله 😍
+
+___________________________________________________________
+
+sprix-agent موجود داخل ويسو ك خدمه ب جانب الاسئله
+</motion.p>
+        </section>
+
+        {/* JOURNEY */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.6 }}
+          className="mt-14 border-y border-border bg-card"
+        >
+          <ol className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-3 px-5 py-5 text-sm font-bold sm:grid-cols-4 lg:grid-cols-7 lg:px-10">
+            {JOURNEY.map((label, index) => (
+              <motion.li
+                key={label}
+                initial={{ opacity: 0, x: 12 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{
+                  duration: 0.4,
+                  delay: index * 0.06,
+                }}
+                className="flex items-center gap-2 text-primary"
+              >
+                <span className="num text-xs text-muted-foreground">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                {label}
+              </motion.li>
+            ))}
+          </ol>
+        </motion.section>
+
+        {/* ABOUT */}
+        {map.get("about") ? (
+          <RevealSection
+            id="about"
+            className="mx-auto max-w-7xl px-5 py-20 lg:px-10"
+          >
+            <SectionHeading section={map.get("about")!} />
+          </RevealSection>
+        ) : null}
+
+        {/* HOW */}
+        {map.get("how") ? (
+          <RevealSection id="how" className="bg-background">
+            <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10">
+              <SectionHeading section={map.get("how")!} />
+
+              <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                {["about", "features", "adaptive", "planning"]
+                  .map((key) => map.get(key))
+                  .filter((s): s is SiteSection => Boolean(s))
+                  .map((s, index) => (
+                    <motion.article
+                      key={s.section_key}
+                      initial={{ opacity: 0, y: 24 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{
+                        once: true,
+                        amount: 0.2,
+                      }}
+                      transition={{
+                        duration: 0.5,
+                        delay: index * 0.08,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="border-t-2 border-primary/20 pt-5"
+                    >
+                      <span className="num text-xs font-bold text-muted-foreground">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+
+                      <h3 className="mt-5 font-display text-xl font-bold">
+                        {s.title}
+                      </h3>
+
+                      <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                        {s.description}
+                      </p>
+                    </motion.article>
+                  ))}
+              </div>
+            </div>
+          </RevealSection>
+        ) : null}
+
+        {/* FEATURES */}
+        {map.get("features") ? (
+          <RevealSection
+            id="features"
+            className="mx-auto max-w-7xl px-5 py-20 lg:px-10"
+          >
+            <SectionHeading section={map.get("features")!} />
+
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {["generator", "adaptive", "planning"]
+                .map((key) => map.get(key))
+                .filter((s): s is SiteSection => Boolean(s))
+                .map((s, index) => (
+                  <motion.article
+                    key={s.section_key}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{
+                      once: true,
+                      amount: 0.2,
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      delay: index * 0.1,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="rounded-xl border border-border bg-card p-6"
+                  >
+                    <h3 className="font-display text-lg font-bold">
+                      {s.title}
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                      {s.description}
+                    </p>
+                  </motion.article>
+                ))}
+            </div>
+          </RevealSection>
+        ) : null}
+
+        {/* TEACHERS */}
+        {teachersVisible && map.get("teachers") ? (
+          <RevealSection id="teachers" className="bg-background">
+            <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10">
+              <SectionHeading section={map.get("teachers")!} />
+
+              <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {teachers.data?.map((t, index) => (
+                  <motion.article
+                    key={t.id}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{
+                      once: true,
+                      amount: 0.15,
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      delay: index * 0.08,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="flex gap-4 rounded-xl border border-border bg-card p-5"
+                  >
+                    {t.image_url ? (
+                      <img
+                        src={t.image_url}
+                        alt={t.name}
+                        className="size-16 shrink-0 rounded-full object-cover"
+                      />
+                    ) : null}
+
+                    <div className="min-w-0">
+                      <h3 className="flex items-center gap-1.5 font-bold">
+                        {t.name}
+                        <BadgeCheck className="size-4 text-primary" />
+                      </h3>
+
+                      {t.specialization ? (
+                        <p className="text-xs text-primary">
+                          {t.specialization}
+                        </p>
+                      ) : null}
+
+                      {t.description ? (
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {t.description}
+                        </p>
+                      ) : null}
+
+                      {t.verification_url ? (
+                        <a
+                          href={t.verification_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-block text-xs font-semibold text-primary underline-offset-4 hover:underline"
+                        >
+                          توثيق المدرس
+                        </a>
+                      ) : null}
+                    </div>
+                  </motion.article>
+                ))}
+              </div>
+            </div>
+          </RevealSection>
+        ) : null}
+
+        {/* PRICING */}
+        {(plans.data?.length ?? 0) > 0 && map.get("pricing") ? (
+          <RevealSection
+            id="pricing"
+            className="mx-auto max-w-7xl px-5 py-20 lg:px-10"
+          >
+            <SectionHeading section={map.get("pricing")!} />
+
+            <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {plans.data?.map((plan, index) => {
+                const features = Array.isArray(plan.features)
+                  ? (plan.features as string[])
+                  : [];
+
+                return (
+                  <motion.article
+                    key={plan.id}
+                    initial={{ opacity: 0, y: 28 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{
+                      once: true,
+                      amount: 0.15,
+                    }}
+                    transition={{
+                      duration: 0.55,
+                      delay: index * 0.1,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="flex flex-col rounded-xl border border-border bg-card p-6"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-display text-xl font-bold">
+                        {plan.name_ar}
+                      </h3>
+
+                      {plan.badge ? (
+                        <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                          {plan.badge}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <p className="mt-4 flex items-baseline gap-2">
+                      <span className="num font-display text-3xl font-black">
+                        {toArabicSafeNumber(Number(plan.price_egp))}
+                      </span>
+
+                      <span className="text-sm text-muted-foreground">
+                        جنيه
+                      </span>
+
+                      {plan.original_price_egp ? (
+                        <span className="num text-sm text-muted-foreground line-through">
+                          {toArabicSafeNumber(
+                            Number(plan.original_price_egp),
+                          )}
+                        </span>
+                      ) : null}
+                    </p>
+
+                    {plan.description_ar ? (
+                      <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                        {plan.description_ar}
+                      </p>
+                    ) : null}
+
+                    {features.length ? (
+                      <ul className="mt-5 space-y-2.5 text-sm">
+                        {features.map((f) => (
+                          <li
+                            key={f}
+                            className="flex items-start gap-2"
+                          >
+                            <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+
+                    <Button
+                      asChild
+                      className="mt-6 w-full rounded-full"
+                    >
+                      <Link to="/auth">اشترك الآن</Link>
+                    </Button>
+                  </motion.article>
+                );
+              })}
+            </div>
+          </RevealSection>
+        ) : null}
+
+        {/* COMPETITION INFO */}
+        {contestVisible && map.get("competition") ? (
+          <RevealSection id="competition" className="bg-background">
+            <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10">
+              <SectionHeading section={map.get("competition")!} />
+
+              {contestRow?.prize_egp ? (
+                <motion.p
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{
+                    once: true,
+                    amount: 0.2,
+                  }}
+                  transition={{
+                    duration: 0.55,
+                    delay: 0.15,
+                  }}
+                  className="mt-8 font-display text-4xl font-black text-primary"
+                >
+                  <span className="num">
+                    {toArabicSafeNumber(Number(contestRow.prize_egp))}
+                  </span>{" "}
+                  <span className="text-2xl">
+                    {contestRow.currency ?? "EGP"}
+                  </span>
+                </motion.p>
+              ) : null}
+            </div>
+          </RevealSection>
+        ) : null}
+
+        {/* FAQ */}
+        {(faq.data?.length ?? 0) > 0 && map.get("faq") ? (
+          <RevealSection
+            id="faq"
+            className="mx-auto max-w-7xl px-5 py-20 lg:px-10"
+          >
+            <SectionHeading section={map.get("faq")!} />
+
+            <div className="mt-10 divide-y divide-border border-y border-border">
+              {faq.data?.map((item, index) => (
+                <motion.details
+                  key={item.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{
+                    once: true,
+                    amount: 0.2,
+                  }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.05,
+                  }}
+                  className="group py-5"
+                >
+                  <summary className="cursor-pointer list-none font-bold">
+                    {item.question}
+                  </summary>
+
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                    {item.answer}
+                  </p>
+                </motion.details>
               ))}
             </div>
-          </section>
+          </RevealSection>
+        ) : null}
 
-          <section className="surface-panel mt-6 flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="font-display text-lg font-bold">وضع التعجيز ☠️</h2>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
-                هنا مفيش أسئلة سهلة. هنا بنشوف إنت فاهم بجد ولا حافظ. لو خلصت المجموعة من غير ما
-                تتبهدل شوية، يبقى إنت جامد.
-              </p>
+        {/* CTA */}
+        {map.get("cta") ? (
+          <RevealSection className="mx-auto max-w-7xl px-4 pb-20 sm:px-5 lg:px-10">
+            <div className="rounded-[2rem] border border-border bg-card px-6 py-16 text-center sm:px-10">
+              <h2 className="font-display text-3xl font-black sm:text-4xl">
+                {map.get("cta")?.title}
+              </h2>
+
+              {map.get("cta")?.description ? (
+                <p className="mx-auto mt-4 max-w-xl leading-8 text-muted-foreground">
+                  {map.get("cta")?.description}
+                </p>
+              ) : null}
+
+              <Button
+                asChild
+                size="lg"
+                className="mt-8 rounded-full"
+              >
+                <Link to={map.get("cta")?.cta_href ?? "/auth"}>
+                  {map.get("cta")?.cta_label ?? heroCta}
+                </Link>
+              </Button>
             </div>
-            <Button asChild variant="outline">
-              <Link to="/auth">وريني الأسئلة التقيلة</Link>
-            </Button>
-          </section>
-        </main>
-      </div>
+          </RevealSection>
+        ) : null}
+
+        {/* COMPETITION GRAPHIC */}
+        {map.get("competition") ? (
+          <RevealSection className="mx-auto max-w-7xl px-4 pb-20 sm:px-5 lg:px-10">
+            <div className="overflow-hidden rounded-[2rem] border border-border bg-card">
+              {/* Image with title overlay */}
+              <div className="relative w-full">
+                {map.get("competition")?.image_url ? (
+                  <img
+                    src={map.get("competition")?.image_url ?? undefined}
+                    alt={
+                      map.get("competition")?.title ??
+                      "WISO Competition"
+                    }
+                    className="h-auto w-full object-cover"
+                  />
+                ) : null}
+
+                <h2 className="absolute inset-x-0 top-4 text-center font-display text-3xl font-black text-white drop-shadow-lg sm:text-4xl">
+                  {map.get("competition")?.title}
+                </h2>
+              </div>
+
+              {/* Text + button */}
+              <div className="px-6 py-10 text-center sm:px-10">
+                {map.get("competition")?.description ? (
+                  <p className="mx-auto mt-4 max-w-xl leading-8 text-muted-foreground">
+                    {map.get("competition")?.description}
+                  </p>
+                ) : null}
+
+                <Button
+                  asChild
+                  size="lg"
+                  className="mt-8 rounded-full"
+                >
+                  <Link
+                    to={
+                      map.get("competition")?.cta_href ?? "/auth"
+                    }
+                  >
+                    {map.get("competition")?.cta_label ?? heroCta}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </RevealSection>
+        ) : null}
+
+        {/* EMPTY STATE */}
+        {!isLoading && map.size === 0 ? (
+          <RevealSection className="mx-auto max-w-3xl px-5 py-24 text-center">
+            <h2 className="font-display text-2xl font-bold">
+              محتوى الصفحة لسه مش متظبط
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              الأقسام بتتضبط من لوحة الإدارة، وأول ما تتفعل هتظهر هنا على طول.
+            </p>
+          </RevealSection>
+        ) : null}
+      </main>
 
       <Footer />
     </div>

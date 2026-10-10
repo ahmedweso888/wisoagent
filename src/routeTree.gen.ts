@@ -12,8 +12,36 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CenterRequestRouteImport } from './routes/center-request'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedGenerateRouteImport } from './routes/_authenticated/generate'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedQureoRouteImport } from './routes/_authenticated/qureo'
+import { Route as AuthenticatedRequestsRouteImport } from './routes/_authenticated/requests'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSprixRouteImport } from './routes/_authenticated/sprix'
+import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
+import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as AuthenticatedWorkWithWisoRouteImport } from './routes/_authenticated/work-with-wiso'
+import { Route as InviteCodeRouteImport } from './routes/invite.$code'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
+import { Route as AuthenticatedAdminBundlesRouteImport } from './routes/_authenticated/admin.bundles'
+import { Route as AuthenticatedAdminCenterRequestsRouteImport } from './routes/_authenticated/admin.center-requests'
+import { Route as AuthenticatedAdminCentersRouteImport } from './routes/_authenticated/admin.centers'
+import { Route as AuthenticatedAdminCurriculumRouteImport } from './routes/_authenticated/admin.curriculum'
+import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
+import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin.notifications'
+import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
+import { Route as AuthenticatedAdminQuestionsRouteImport } from './routes/_authenticated/admin.questions'
+import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authenticated/admin.requests'
+import { Route as AuthenticatedAdminSprixRouteImport } from './routes/_authenticated/admin.sprix'
+import { Route as AuthenticatedAdminStudentsRouteImport } from './routes/_authenticated/admin.students'
+import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin.system'
+import { Route as AuthenticatedAdminToolsRouteImport } from './routes/_authenticated/admin.tools'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,9 +57,86 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CenterRequestRoute = CenterRequestRouteImport.update({
+  id: '/center-request',
+  path: '/center-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGenerateRoute = AuthenticatedGenerateRouteImport.update({
+  id: '/generate',
+  path: '/generate',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQureoRoute = AuthenticatedQureoRouteImport.update({
+  id: '/qureo',
+  path: '/qureo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRequestsRoute = AuthenticatedRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSprixRoute = AuthenticatedSprixRouteImport.update({
+  id: '/sprix',
+  path: '/sprix',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedToolsRoute = AuthenticatedToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWorkWithWisoRoute =
+  AuthenticatedWorkWithWisoRouteImport.update({
+    id: '/work-with-wiso',
+    path: '/work-with-wiso',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const InviteCodeRoute = InviteCodeRouteImport.update({
+  id: '/invite/$code',
+  path: '/invite/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminAiRoute = AuthenticatedAdminAiRouteImport.update({
@@ -39,45 +144,298 @@ const AuthenticatedAdminAiRoute = AuthenticatedAdminAiRouteImport.update({
   path: '/admin/ai',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminBundlesRoute =
+  AuthenticatedAdminBundlesRouteImport.update({
+    id: '/admin/bundles',
+    path: '/admin/bundles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminCenterRequestsRoute =
+  AuthenticatedAdminCenterRequestsRouteImport.update({
+    id: '/admin/center-requests',
+    path: '/admin/center-requests',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminCentersRoute =
+  AuthenticatedAdminCentersRouteImport.update({
+    id: '/admin/centers',
+    path: '/admin/centers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminCurriculumRoute =
+  AuthenticatedAdminCurriculumRouteImport.update({
+    id: '/admin/curriculum',
+    path: '/admin/curriculum',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
+  id: '/admin/jobs',
+  path: '/admin/jobs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminNotificationsRoute =
+  AuthenticatedAdminNotificationsRouteImport.update({
+    id: '/admin/notifications',
+    path: '/admin/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminPaymentsRoute =
+  AuthenticatedAdminPaymentsRouteImport.update({
+    id: '/admin/payments',
+    path: '/admin/payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminQuestionsRoute =
+  AuthenticatedAdminQuestionsRouteImport.update({
+    id: '/admin/questions',
+    path: '/admin/questions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminRequestsRoute =
+  AuthenticatedAdminRequestsRouteImport.update({
+    id: '/admin/requests',
+    path: '/admin/requests',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSprixRoute = AuthenticatedAdminSprixRouteImport.update({
+  id: '/admin/sprix',
+  path: '/admin/sprix',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminStudentsRoute =
+  AuthenticatedAdminStudentsRouteImport.update({
+    id: '/admin/students',
+    path: '/admin/students',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSystemRoute =
+  AuthenticatedAdminSystemRouteImport.update({
+    id: '/admin/system',
+    path: '/admin/system',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminToolsRoute = AuthenticatedAdminToolsRouteImport.update({
+  id: '/admin/tools',
+  path: '/admin/tools',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/center-request': typeof CenterRequestRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/generate': typeof AuthenticatedGenerateRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/plan': typeof AuthenticatedPlanRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/qureo': typeof AuthenticatedQureoRoute
+  '/requests': typeof AuthenticatedRequestsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/sprix': typeof AuthenticatedSprixRoute
+  '/tools': typeof AuthenticatedToolsRoute
+  '/wallet': typeof AuthenticatedWalletRoute
+  '/work-with-wiso': typeof AuthenticatedWorkWithWisoRoute
+  '/invite/$code': typeof InviteCodeRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/admin/bundles': typeof AuthenticatedAdminBundlesRoute
+  '/admin/center-requests': typeof AuthenticatedAdminCenterRequestsRoute
+  '/admin/centers': typeof AuthenticatedAdminCentersRoute
+  '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
+  '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
+  '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/questions': typeof AuthenticatedAdminQuestionsRoute
+  '/admin/requests': typeof AuthenticatedAdminRequestsRoute
+  '/admin/sprix': typeof AuthenticatedAdminSprixRoute
+  '/admin/students': typeof AuthenticatedAdminStudentsRoute
+  '/admin/system': typeof AuthenticatedAdminSystemRoute
+  '/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/center-request': typeof CenterRequestRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/generate': typeof AuthenticatedGenerateRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/plan': typeof AuthenticatedPlanRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/qureo': typeof AuthenticatedQureoRoute
+  '/requests': typeof AuthenticatedRequestsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/sprix': typeof AuthenticatedSprixRoute
+  '/tools': typeof AuthenticatedToolsRoute
+  '/wallet': typeof AuthenticatedWalletRoute
+  '/work-with-wiso': typeof AuthenticatedWorkWithWisoRoute
+  '/invite/$code': typeof InviteCodeRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/admin/bundles': typeof AuthenticatedAdminBundlesRoute
+  '/admin/center-requests': typeof AuthenticatedAdminCenterRequestsRoute
+  '/admin/centers': typeof AuthenticatedAdminCentersRoute
+  '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
+  '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
+  '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/questions': typeof AuthenticatedAdminQuestionsRoute
+  '/admin/requests': typeof AuthenticatedAdminRequestsRoute
+  '/admin/sprix': typeof AuthenticatedAdminSprixRoute
+  '/admin/students': typeof AuthenticatedAdminStudentsRoute
+  '/admin/system': typeof AuthenticatedAdminSystemRoute
+  '/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/center-request': typeof CenterRequestRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/generate': typeof AuthenticatedGenerateRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/plan': typeof AuthenticatedPlanRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/qureo': typeof AuthenticatedQureoRoute
+  '/_authenticated/requests': typeof AuthenticatedRequestsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/sprix': typeof AuthenticatedSprixRoute
+  '/_authenticated/tools': typeof AuthenticatedToolsRoute
+  '/_authenticated/wallet': typeof AuthenticatedWalletRoute
+  '/_authenticated/work-with-wiso': typeof AuthenticatedWorkWithWisoRoute
+  '/invite/$code': typeof InviteCodeRoute
   '/_authenticated/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/_authenticated/admin/bundles': typeof AuthenticatedAdminBundlesRoute
+  '/_authenticated/admin/center-requests': typeof AuthenticatedAdminCenterRequestsRoute
+  '/_authenticated/admin/centers': typeof AuthenticatedAdminCentersRoute
+  '/_authenticated/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
+  '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
+  '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/_authenticated/admin/questions': typeof AuthenticatedAdminQuestionsRoute
+  '/_authenticated/admin/requests': typeof AuthenticatedAdminRequestsRoute
+  '/_authenticated/admin/sprix': typeof AuthenticatedAdminSprixRoute
+  '/_authenticated/admin/students': typeof AuthenticatedAdminStudentsRoute
+  '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
+  '/_authenticated/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/admin/ai'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/center-request'
+    | '/dashboard'
+    | '/generate'
+    | '/notifications'
+    | '/onboarding'
+    | '/plan'
+    | '/profile'
+    | '/qureo'
+    | '/requests'
+    | '/settings'
+    | '/sprix'
+    | '/tools'
+    | '/wallet'
+    | '/work-with-wiso'
+    | '/invite/$code'
+    | '/admin/ai'
+    | '/admin/bundles'
+    | '/admin/center-requests'
+    | '/admin/centers'
+    | '/admin/curriculum'
+    | '/admin/jobs'
+    | '/admin/notifications'
+    | '/admin/payments'
+    | '/admin/questions'
+    | '/admin/requests'
+    | '/admin/sprix'
+    | '/admin/students'
+    | '/admin/system'
+    | '/admin/tools'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/admin/ai'
+  to:
+    | '/'
+    | '/auth'
+    | '/center-request'
+    | '/dashboard'
+    | '/generate'
+    | '/notifications'
+    | '/onboarding'
+    | '/plan'
+    | '/profile'
+    | '/qureo'
+    | '/requests'
+    | '/settings'
+    | '/sprix'
+    | '/tools'
+    | '/wallet'
+    | '/work-with-wiso'
+    | '/invite/$code'
+    | '/admin/ai'
+    | '/admin/bundles'
+    | '/admin/center-requests'
+    | '/admin/centers'
+    | '/admin/curriculum'
+    | '/admin/jobs'
+    | '/admin/notifications'
+    | '/admin/payments'
+    | '/admin/questions'
+    | '/admin/requests'
+    | '/admin/sprix'
+    | '/admin/students'
+    | '/admin/system'
+    | '/admin/tools'
+    | '/admin'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/center-request'
     | '/_authenticated/dashboard'
+    | '/_authenticated/generate'
+    | '/_authenticated/notifications'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/plan'
+    | '/_authenticated/profile'
+    | '/_authenticated/qureo'
+    | '/_authenticated/requests'
+    | '/_authenticated/settings'
+    | '/_authenticated/sprix'
+    | '/_authenticated/tools'
+    | '/_authenticated/wallet'
+    | '/_authenticated/work-with-wiso'
+    | '/invite/$code'
     | '/_authenticated/admin/ai'
+    | '/_authenticated/admin/bundles'
+    | '/_authenticated/admin/center-requests'
+    | '/_authenticated/admin/centers'
+    | '/_authenticated/admin/curriculum'
+    | '/_authenticated/admin/jobs'
+    | '/_authenticated/admin/notifications'
+    | '/_authenticated/admin/payments'
+    | '/_authenticated/admin/questions'
+    | '/_authenticated/admin/requests'
+    | '/_authenticated/admin/sprix'
+    | '/_authenticated/admin/students'
+    | '/_authenticated/admin/system'
+    | '/_authenticated/admin/tools'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CenterRequestRoute: typeof CenterRequestRoute
+  InviteCodeRoute: typeof InviteCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -103,11 +461,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/center-request': {
+      id: '/center-request'
+      path: '/center-request'
+      fullPath: '/center-request'
+      preLoaderRoute: typeof CenterRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/generate': {
+      id: '/_authenticated/generate'
+      path: '/generate'
+      fullPath: '/generate'
+      preLoaderRoute: typeof AuthenticatedGenerateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plan': {
+      id: '/_authenticated/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof AuthenticatedPlanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qureo': {
+      id: '/_authenticated/qureo'
+      path: '/qureo'
+      fullPath: '/qureo'
+      preLoaderRoute: typeof AuthenticatedQureoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/requests': {
+      id: '/_authenticated/requests'
+      path: '/requests'
+      fullPath: '/requests'
+      preLoaderRoute: typeof AuthenticatedRequestsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sprix': {
+      id: '/_authenticated/sprix'
+      path: '/sprix'
+      fullPath: '/sprix'
+      preLoaderRoute: typeof AuthenticatedSprixRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tools': {
+      id: '/_authenticated/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof AuthenticatedToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet': {
+      id: '/_authenticated/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AuthenticatedWalletRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/work-with-wiso': {
+      id: '/_authenticated/work-with-wiso'
+      path: '/work-with-wiso'
+      fullPath: '/work-with-wiso'
+      preLoaderRoute: typeof AuthenticatedWorkWithWisoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/invite/$code': {
+      id: '/invite/$code'
+      path: '/invite/$code'
+      fullPath: '/invite/$code'
+      preLoaderRoute: typeof InviteCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/ai': {
@@ -117,17 +580,160 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/bundles': {
+      id: '/_authenticated/admin/bundles'
+      path: '/admin/bundles'
+      fullPath: '/admin/bundles'
+      preLoaderRoute: typeof AuthenticatedAdminBundlesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/center-requests': {
+      id: '/_authenticated/admin/center-requests'
+      path: '/admin/center-requests'
+      fullPath: '/admin/center-requests'
+      preLoaderRoute: typeof AuthenticatedAdminCenterRequestsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/centers': {
+      id: '/_authenticated/admin/centers'
+      path: '/admin/centers'
+      fullPath: '/admin/centers'
+      preLoaderRoute: typeof AuthenticatedAdminCentersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/curriculum': {
+      id: '/_authenticated/admin/curriculum'
+      path: '/admin/curriculum'
+      fullPath: '/admin/curriculum'
+      preLoaderRoute: typeof AuthenticatedAdminCurriculumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/jobs': {
+      id: '/_authenticated/admin/jobs'
+      path: '/admin/jobs'
+      fullPath: '/admin/jobs'
+      preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/notifications': {
+      id: '/_authenticated/admin/notifications'
+      path: '/admin/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AuthenticatedAdminNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/payments': {
+      id: '/_authenticated/admin/payments'
+      path: '/admin/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AuthenticatedAdminPaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/questions': {
+      id: '/_authenticated/admin/questions'
+      path: '/admin/questions'
+      fullPath: '/admin/questions'
+      preLoaderRoute: typeof AuthenticatedAdminQuestionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/requests': {
+      id: '/_authenticated/admin/requests'
+      path: '/admin/requests'
+      fullPath: '/admin/requests'
+      preLoaderRoute: typeof AuthenticatedAdminRequestsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/sprix': {
+      id: '/_authenticated/admin/sprix'
+      path: '/admin/sprix'
+      fullPath: '/admin/sprix'
+      preLoaderRoute: typeof AuthenticatedAdminSprixRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/students': {
+      id: '/_authenticated/admin/students'
+      path: '/admin/students'
+      fullPath: '/admin/students'
+      preLoaderRoute: typeof AuthenticatedAdminStudentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/system': {
+      id: '/_authenticated/admin/system'
+      path: '/admin/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AuthenticatedAdminSystemRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/tools': {
+      id: '/_authenticated/admin/tools'
+      path: '/admin/tools'
+      fullPath: '/admin/tools'
+      preLoaderRoute: typeof AuthenticatedAdminToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedGenerateRoute: typeof AuthenticatedGenerateRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedQureoRoute: typeof AuthenticatedQureoRoute
+  AuthenticatedRequestsRoute: typeof AuthenticatedRequestsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSprixRoute: typeof AuthenticatedSprixRoute
+  AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
+  AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
+  AuthenticatedWorkWithWisoRoute: typeof AuthenticatedWorkWithWisoRoute
   AuthenticatedAdminAiRoute: typeof AuthenticatedAdminAiRoute
+  AuthenticatedAdminBundlesRoute: typeof AuthenticatedAdminBundlesRoute
+  AuthenticatedAdminCenterRequestsRoute: typeof AuthenticatedAdminCenterRequestsRoute
+  AuthenticatedAdminCentersRoute: typeof AuthenticatedAdminCentersRoute
+  AuthenticatedAdminCurriculumRoute: typeof AuthenticatedAdminCurriculumRoute
+  AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
+  AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
+  AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
+  AuthenticatedAdminQuestionsRoute: typeof AuthenticatedAdminQuestionsRoute
+  AuthenticatedAdminRequestsRoute: typeof AuthenticatedAdminRequestsRoute
+  AuthenticatedAdminSprixRoute: typeof AuthenticatedAdminSprixRoute
+  AuthenticatedAdminStudentsRoute: typeof AuthenticatedAdminStudentsRoute
+  AuthenticatedAdminSystemRoute: typeof AuthenticatedAdminSystemRoute
+  AuthenticatedAdminToolsRoute: typeof AuthenticatedAdminToolsRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedGenerateRoute: AuthenticatedGenerateRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPlanRoute: AuthenticatedPlanRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedQureoRoute: AuthenticatedQureoRoute,
+  AuthenticatedRequestsRoute: AuthenticatedRequestsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSprixRoute: AuthenticatedSprixRoute,
+  AuthenticatedToolsRoute: AuthenticatedToolsRoute,
+  AuthenticatedWalletRoute: AuthenticatedWalletRoute,
+  AuthenticatedWorkWithWisoRoute: AuthenticatedWorkWithWisoRoute,
   AuthenticatedAdminAiRoute: AuthenticatedAdminAiRoute,
+  AuthenticatedAdminBundlesRoute: AuthenticatedAdminBundlesRoute,
+  AuthenticatedAdminCenterRequestsRoute: AuthenticatedAdminCenterRequestsRoute,
+  AuthenticatedAdminCentersRoute: AuthenticatedAdminCentersRoute,
+  AuthenticatedAdminCurriculumRoute: AuthenticatedAdminCurriculumRoute,
+  AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
+  AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
+  AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
+  AuthenticatedAdminQuestionsRoute: AuthenticatedAdminQuestionsRoute,
+  AuthenticatedAdminRequestsRoute: AuthenticatedAdminRequestsRoute,
+  AuthenticatedAdminSprixRoute: AuthenticatedAdminSprixRoute,
+  AuthenticatedAdminStudentsRoute: AuthenticatedAdminStudentsRoute,
+  AuthenticatedAdminSystemRoute: AuthenticatedAdminSystemRoute,
+  AuthenticatedAdminToolsRoute: AuthenticatedAdminToolsRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -137,6 +743,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CenterRequestRoute: CenterRequestRoute,
+  InviteCodeRoute: InviteCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

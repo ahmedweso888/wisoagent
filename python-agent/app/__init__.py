@@ -1,0 +1,1 @@
+"""WISO Agent FastAPI service."""

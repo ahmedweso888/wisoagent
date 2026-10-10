@@ -10,28 +10,23 @@
  * for each call, and usage logging tracks the tier and request ID.
  */
 import type { AiConfig } from "../config";
-import {
-  createProvider,
-  resolveAiConfig,
-  type AiSettingsRow,
-} from "../providers/registry.server";
-import type {
-  AiAttachment,
-  AiStructuredResult,
-  AIProvider,
-  ProviderId,
-} from "../providers/types";
+import { createProvider, resolveAiConfig, type AiSettingsRow } from "../providers/registry.server";
+import type { AiAttachment, AiStructuredResult, AIProvider, ProviderId } from "../providers/types";
 import { routeTask, type RouteInput } from "../engine/router.server";
 import { generateRequestId, logAiEvent } from "../engine/logging.server";
 import type { TierId, TaskType } from "../engine/config";
 
 export type AgentTask =
-  | "syllabus"
-  | "planner"
-  | "questions"
-  | "validation"
-  | "mistakes"
-  | "performance";
+  | "question_generation"
+  | "question_validation"
+  | "study_planning"
+  | "study_plan_redesign"
+  | "curriculum_analysis"
+  | "concept_extraction"
+  | "performance_analysis"
+  | "mistake_analysis"
+  | "mastery_analysis"
+  | "similarity_analysis";
 
 async function loadSettings(): Promise<AiSettingsRow | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -64,17 +59,19 @@ async function logUsage(entry: {
   model: string;
   tokensUsed: number;
   latencyMs: number;
-  questionsGenerated?: number;
-  documentsAnalyzed?: number;
-  imagesAnalyzed?: number;
+  inputTokens?: number | undefined;
+  outputTokens?: number | undefined;
+  questionsGenerated?: number | undefined;
+  documentsAnalyzed?: number | undefined;
+  imagesAnalyzed?: number | undefined;
   status: "ok" | "error";
-  error?: string;
-  tier?: TierId;
-  requestId?: string;
-  questionsApproved?: number;
-  questionsRejected?: number;
-  retries?: number;
-  escalations?: number;
+  error?: string | undefined;
+  tier?: TierId | undefined;
+  requestId?: string | undefined;
+  questionsApproved?: number | undefined;
+  questionsRejected?: number | undefined;
+  retries?: number | undefined;
+  escalations?: number | undefined;
 }) {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -85,6 +82,8 @@ async function logUsage(entry: {
       model: entry.model,
       tokens_used: entry.tokensUsed,
       latency_ms: entry.latencyMs,
+      input_tokens: entry.inputTokens ?? null,
+      output_tokens: entry.outputTokens ?? null,
       questions_generated: entry.questionsGenerated ?? 0,
       documents_analyzed: entry.documentsAnalyzed ?? 0,
       images_analyzed: entry.imagesAnalyzed ?? 0,
@@ -120,13 +119,10 @@ type RunOptions = {
     imagesAnalyzed?: number;
   };
   /** Difficulty hint for the router (question generation only). */
-  difficulty?: string;
+  difficulty?: string | undefined;
   /** Whether this is a bulk/preprocessing task. */
-  bulk?: boolean;
-  /** Override the model (when caller has already routed). */
-  overrideModel?: string;
-  /** Override the tier (when caller has already routed). */
-  overrideTier?: TierId;
+  bulk?: boolean | undefined;
+  requestId?: string | undefined;
 };
 
 /**
@@ -137,23 +133,18 @@ type RunOptions = {
  * based on task type and difficulty. When disabled, uses the configured model.
  */
 export async function runStructuredTask<T>(options: RunOptions): Promise<T> {
-  const { config, enabled, autoRoutingEnabled } = await getActiveConfig();
+  const { config, enabled } = await getActiveConfig();
   if (!enabled) throw new Error("AI is disabled by the administrator.");
 
-  const requestId = generateRequestId();
-
-  // Route to the correct tier/model
-  const routingInput: RouteInput = {
+  const requestId = options.requestId ?? generateRequestId();
+  const routing = routeTask({
     taskType: options.agent as TaskType,
     difficulty: options.difficulty as RouteInput["difficulty"],
     bulk: options.bulk,
-    autoRoutingEnabled,
-    fallbackModel: config.model,
-  };
-  const routing = routeTask(routingInput);
+  });
 
-  const tier = options.overrideTier ?? routing.tier;
-  const model = options.overrideModel ?? routing.model;
+  const tier = routing.tier;
+  const model = routing.model;
 
   logAiEvent({
     requestId,
@@ -165,9 +156,6 @@ export async function runStructuredTask<T>(options: RunOptions): Promise<T> {
   });
 
   const order: ProviderId[] = [config.provider];
-  if (config.fallbackEnabled && config.fallbackProvider && config.fallbackProvider !== config.provider) {
-    order.push(config.fallbackProvider);
-  }
 
   let lastError: unknown;
   for (const id of order) {
@@ -185,6 +173,9 @@ export async function runStructuredTask<T>(options: RunOptions): Promise<T> {
         ...(options.call.attachments ? { attachments: options.call.attachments } : {}),
         schemaName: options.call.schemaName,
         jsonSchema: options.call.jsonSchema,
+        requestId,
+        taskType: options.agent,
+        tier,
       })) as AiStructuredResult<T>;
 
       await logUsage({
@@ -194,6 +185,8 @@ export async function runStructuredTask<T>(options: RunOptions): Promise<T> {
         model: result.usage.model,
         tokensUsed: result.usage.tokensUsed,
         latencyMs: result.usage.latencyMs,
+        inputTokens: result.usage.inputTokens,
+        outputTokens: result.usage.outputTokens,
         status: "ok",
         tier,
         requestId,
