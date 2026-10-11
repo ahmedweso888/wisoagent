@@ -37,6 +37,32 @@ function PlanPage() {
       return data;
     },
   });
+    return (
+    <main
+      dir="rtl"
+      className="flex min-h-[80vh] items-center justify-center bg-gradient-to-br from-[#151b12] via-[#252f1d] to-[#11140e] px-6 py-20 text-center"
+    >
+      <div className="max-w-xl">
+        <div className="mb-6 text-6xl">🚧</div>
+
+        <p className="mb-4 font-bold tracking-widest text-lime-300">
+          WISO · COMING SOON
+        </p>
+
+        <h1 className="text-4xl font-black text-white sm:text-6xl">
+          خطة السنة
+          <br />
+          <span className="text-lime-300">قريبًا جدًا</span>
+        </h1>
+
+        <p className="mt-6 text-lg leading-9 text-white/70">
+          بنجهّزلك تجربة مميزة لتنظيم مذاكرتك وتحقيق أهدافك.
+          <br />
+          استنّانا قريبًا على WISO 💚
+        </p>
+      </div>
+    </main>
+  );
   const subjects = useQuery({
     queryKey: ["plan-subjects"],
     queryFn: async () => {
