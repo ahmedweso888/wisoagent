@@ -1,7 +1,6 @@
 import { t as getRequest } from "./request-response-B7GxCXoC.mjs";
 import { t as createClient } from "../_libs/supabase__supabase-js.mjs";
 import { t as __exportAll } from "./rolldown-runtime-D7D4PA-g.mjs";
-import processModule from "node:process";
 //#region node_modules/.nitro/vite/services/ssr/assets/user-client.server-Bgk04puY.js
 /**
 * Request-scoped Supabase client that acts AS the signed-in student.
@@ -13,8 +12,8 @@ import processModule from "node:process";
 */
 var user_client_server_exports = /* @__PURE__ */ __exportAll({ getUserSupabase: () => getUserSupabase });
 function getUserSupabase() {
-	const url = processModule.env["SUPABASE_URL"];
-	const key = processModule.env["SUPABASE_PUBLISHABLE_KEY"];
+	const url = process.env["SUPABASE_URL"];
+	const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
 	if (!url || !key) throw new Error("Supabase environment variables are missing.");
 	const authHeader = getRequest()?.headers?.get("authorization");
 	if (!authHeader?.startsWith("Bearer ")) throw new Error("Unauthorized: missing bearer token");

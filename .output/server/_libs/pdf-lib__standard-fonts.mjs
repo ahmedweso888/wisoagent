@@ -1,5 +1,5 @@
 import { i as __toESM } from "../_runtime.mjs";
-import { n as require_pako } from "./pako+pdf-lib__fontkit+unenv.mjs";
+import { n as require_pako } from "./pako+pdf-lib__fontkit.mjs";
 //#region node_modules/@pdf-lib/standard-fonts/es/utils.js
 var import_pako = /* @__PURE__ */ __toESM(require_pako());
 var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

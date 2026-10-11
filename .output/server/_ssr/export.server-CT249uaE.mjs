@@ -1,9 +1,9 @@
 import { i as __toESM } from "../_runtime.mjs";
-import { t as fontkit } from "../_libs/pako+pdf-lib__fontkit+unenv.mjs";
 import { t as getUserSupabase } from "./user-client.server-Bgk04puY.mjs";
 import { i as withCredits } from "./credits.server-DE2DlUF8.mjs";
+import { t as fontkit } from "../_libs/pako+pdf-lib__fontkit.mjs";
 import { t as bidiFactory } from "../_libs/bidi-js.mjs";
-import { n as rgb, t as PDFDocument } from "../_libs/pdf-lib+tslib.mjs";
+import { n as rgb, t as PDFDocument } from "../_libs/pdf-lib.mjs";
 import { t as require_arabic_persian_reshaper } from "../_libs/arabic-persian-reshaper.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/export.server-CT249uaE.js
 var import_arabic_persian_reshaper = /* @__PURE__ */ __toESM(require_arabic_persian_reshaper());

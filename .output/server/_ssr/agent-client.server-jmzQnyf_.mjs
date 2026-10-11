@@ -1,5 +1,4 @@
 import { t as AiProviderError } from "./registry.server-BFAt_VVY.mjs";
-import processModule from "node:process";
 //#region node_modules/.nitro/vite/services/ssr/assets/agent-client.server-jmzQnyf_.js
 /**
 * The only TypeScript -> Python Agent gateway.
@@ -10,10 +9,10 @@ import processModule from "node:process";
 */
 var DEFAULT_TIMEOUT_MS = 75e3;
 function agentUrl() {
-	return (processModule.env["WISO_AGENT_URL"] ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+	return (process.env["WISO_AGENT_URL"] ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 }
 function agentSecret() {
-	const secret = processModule.env["WISO_AGENT_SECRET"];
+	const secret = process.env["WISO_AGENT_SECRET"];
 	if (!secret) throw new Error("WISO_AGENT_SECRET is not configured on the server.");
 	return secret;
 }

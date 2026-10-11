@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { motion, type MotionProps } from "framer-motion";
 import { ArrowLeft, BadgeCheck, Check } from "lucide-react";
 
 import laptopAsset from "@/assets/wiso-laptop.png";
@@ -102,9 +102,10 @@ function RevealSection({
   className = "",
   delay = 0,
   ...props
-}: React.ComponentPropsWithoutRef<"section"> & {
-  delay?: number;
-}) {
+}: Omit<React.ComponentPropsWithoutRef<"section">, "style"> &
+  Pick<MotionProps, "style"> & {
+    delay?: number;
+  }) {
   return (
     <motion.section
       {...props}

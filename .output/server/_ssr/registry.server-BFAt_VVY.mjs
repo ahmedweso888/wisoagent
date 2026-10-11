@@ -1,7 +1,6 @@
-import { r as __exportAll } from "../_runtime.mjs";
+import { n as __exportAll } from "../_runtime.mjs";
 import { i as normalizeModelId, n as DEFAULT_MODELS, t as AI_CONFIG_DEFAULTS } from "./config-D2J6lUtb.mjs";
 import { t as __exportAll$1 } from "./rolldown-runtime-D7D4PA-g.mjs";
-import processModule from "node:process";
 //#region node_modules/.nitro/vite/services/ssr/assets/registry.server-BFAt_VVY.js
 var registry_server_BFAt_VVY_exports = /* @__PURE__ */ __exportAll({
 	i: () => AiProviderError,
@@ -135,7 +134,7 @@ var BaseProviderAdapter = class {
 var OpenAIProvider = class extends BaseProviderAdapter {
 	id = "openai";
 	isConfigured() {
-		return Boolean(processModule.env["WISO_AGENT_URL"] && processModule.env["WISO_AGENT_SECRET"]);
+		return Boolean(process.env["WISO_AGENT_URL"] && process.env["WISO_AGENT_SECRET"]);
 	}
 	configurationNote() {
 		if (this.isConfigured()) return "WISO Python Agent gateway (server configured)";
@@ -172,7 +171,7 @@ function envProvider() {
 	return "openai";
 }
 function envModel() {
-	return processModule.env["WISO_AI_MODEL"] || processModule.env["OPENAI_MODEL"] || void 0;
+	return process.env["WISO_AI_MODEL"] || process.env["OPENAI_MODEL"] || void 0;
 }
 function resolveAiConfig(settings) {
 	const provider = envProvider();

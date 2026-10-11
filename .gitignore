@@ -41,6 +41,7 @@ htmlcov/
 .nox/
 
 # Build output
+.output/
 
 dist/
 build/

@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-Dk72oS4N.js";import{t}from"./ToolCredentialSubmissionPage-DCEqd5UW.js";var n=e(),r=()=>(0,n.jsx)(t,{toolKey:`qureo`,title:`Qureo Agent`,description:`أرسل بيانات حساب Qureo  وهيتم الحل لحظيا مع كل شكرنا ليكم علي اختيار wiso agent.`});export{r as component};
