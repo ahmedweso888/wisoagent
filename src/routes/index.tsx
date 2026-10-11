@@ -258,37 +258,55 @@ function Landing() {
           </div>
         </section>
         <section>
-          <motion.h1
-  initial={{ opacity: 0, y: 16 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.55 }}
-  className="font-display text-4xl font-black leading-[1.15] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-white drop-shadow-[0_0_18px_rgba(255,255,255,0.35)] sm:text-5xl lg:text-7xl"
->
-  وعشان WISO حاسس بيك
-  <br />
-  يا طالب البكالوريا
-</motion.h1>
+  <motion.h1
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.55 }}
+    className="font-display text-4xl font-black leading-[1.15] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-white drop-shadow-[0_0_18px_rgba(255,255,255,0.35)] sm:text-5xl lg:text-7xl"
+  >
+    وعشان WISO حاسس بيك
+    <br />
+    يا طالب البكالوريا
+  </motion.h1>
 
-<motion.p
-  initial={{ opacity: 0, y: 16 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.55, delay: 0.06 }}
-  className="mx-auto mt-6 max-w-3xl text-lg font-extrabold leading-9 text-[var(--hero-foreground)] drop-shadow-[0_0_12px_rgba(255,255,255,0.25)] sm:text-xl lg:text-2xl"
->
-  عملنالك{" "}
-  <span className="font-black text-cyan-300 drop-shadow-[0_0_14px_rgba(34,211,238,0.8)]">
-    SPRIX Agent
-  </span>{" "}
-  عشان تريح بالك من الثقافة المالية وتركز على باقي موادك،
-  <br />
-  وبـ <span className="font-black text-yellow-300 drop-shadow-[0_0_14px_rgba(250,204,21,0.8)]">40 ج</span>{" "}
- يحللك مستويات الترم كله 😍
+  <motion.p
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.55, delay: 0.06 }}
+    className="mx-auto mt-6 max-w-3xl text-lg font-extrabold leading-9 text-[var(--hero-foreground)] drop-shadow-[0_0_12px_rgba(255,255,255,0.25)] sm:text-xl lg:text-2xl"
+  >
+    عملنالك{" "}
+    <span className="font-black text-cyan-300 drop-shadow-[0_0_14px_rgba(34,211,238,0.8)]">
+      SPRIX Agent
+    </span>{" "}
+    جوه منصة WISO، كخدمة مستقلة جنب خدمة الأسئلة، عشان تريح بالك من الثقافة
+    المالية وتركز على باقي موادك! ❤️
+    <br />
+    <br />
 
-___________________________________________________________
+    حلّ مستويات الترم كله مع{" "}
+    <span className="font-black text-cyan-300">SPRIX Agent</span>{" "}
+    مقابل{" "}
+    <span className="font-black text-yellow-300 drop-shadow-[0_0_14px_rgba(250,204,21,0.8)]">
+      60 جنيه بس
+    </span>{" "}
+    😍
+    <br />
 
-sprix-agent موجود داخل ويسو ك خدمه ب جانب الاسئله
-</motion.p>
-        </section>
+    وجميع مستويات{" "}
+    <span className="font-black text-cyan-300">QUREO</span>{" "}
+    مقابل{" "}
+    <span className="font-black text-yellow-300">70 جنيه</span>.
+    <br />
+
+    ولو إنت طالب هندسة أو علوم حاسب، تقدر تستفيد من الخدمتين مع بعض مقابل{" "}
+    <span className="font-black text-yellow-300 drop-shadow-[0_0_14px_rgba(250,204,21,0.8)]">
+      120 جنيه بس
+    </span>
+    ! 🔥
+  </motion.p>
+</section>
+        
 
         {/* JOURNEY */}
         <motion.section
