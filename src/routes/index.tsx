@@ -16,7 +16,7 @@ import {
   type SiteSection,
 } from "@/hooks/useSiteContent";
 import { toArabicSafeNumber } from "@/lib/format";
-
+<meta name="google-site-verification" content="UIwzs-JkXUIkM6UCZY_rbawdUJeSKoICwWlnOuVpxYw" />
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
