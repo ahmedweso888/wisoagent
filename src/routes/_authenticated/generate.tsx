@@ -67,7 +67,37 @@ function GeneratePage() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [runningAll, setRunningAll] = useState(false);
   const [selectedResult, setSelectedResult] = useState<QueueItem | null>(null);
+  const [comingSoon] = useState(true);
 
+  if (comingSoon) {
+    return (
+      <main
+        dir="rtl"
+        className="relative flex min-h-[80vh] items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-[#151b12] via-[#252f1d] to-[#11140e] px-6 py-20 text-center"
+      >
+        <div className="relative z-10 max-w-xl">
+          <div className="mb-8 text-7xl">🚧</div>
+
+          <p className="mb-4 text-sm font-bold tracking-[0.3em] text-lime-300">
+            WISO · COMING SOON
+          </p>
+
+          <h1 className="text-4xl font-black leading-tight text-white sm:text-6xl">
+            مولّد الأسئلة
+            <br />
+            <span className="text-lime-300">قريبًا جدًا</span>
+          </h1>
+
+          <p className="mt-6 text-lg leading-9 text-white/70">
+            بنجهّزلك تجربة مميزة لتوليد أسئلة تناسب مستواك وتساعدك تتفوق في
+            دراستك.
+            <br />
+            استنّانا قريبًا على WISO 💚
+          </p>
+        </div>
+      </main>
+    );
+  }
   const wallet = useQuery({
     queryKey: ["wallet-state"],
     queryFn: async () => {
@@ -200,53 +230,7 @@ function GeneratePage() {
     onSuccess: () => toast.success("تم التعامل مع كل الطلبات الموجودة في الـQueue."),
     onSettled: () => setRunningAll(false),
   });
-  function GeneratePage() {
-  return (
-    <main
-      dir="rtl"
-      className="relative flex min-h-[80vh] items-center justify-center overflow-hidden rounded-3xl px-6 py-20"
-    >
-      {/* الخلفية */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#151b12] via-[#252f1d] to-[#11140e]" />
-
-      {/* الإضاءة */}
-      <div className="absolute -left-20 -top-20 size-72 rounded-full bg-lime-400/10 blur-3xl" />
-      <div className="absolute -bottom-20 -right-20 size-72 rounded-full bg-lime-300/10 blur-3xl" />
-
-      {/* المحتوى */}
-      <div className="relative z-10 mx-auto max-w-xl text-center">
-        <div className="mx-auto mb-8 flex size-24 items-center justify-center rounded-3xl border border-lime-200/20 bg-lime-300/10 shadow-[0_0_60px_rgba(190,220,100,0.12)]">
-          <span className="text-5xl">🚧</span>
-        </div>
-
-        <p className="mb-4 text-sm font-bold tracking-[0.3em] text-lime-300">
-          WISO · COMING SOON
-        </p>
-
-        <h1 className="text-4xl font-black leading-tight text-white sm:text-6xl">
-          مولّد الأسئلة
-          <br />
-          <span className="text-lime-300">قريبًا جدًا</span>
-        </h1>
-
-        <p className="mx-auto mt-6 max-w-md text-base leading-8 text-white/70 sm:text-lg">
-          بنجهّزلك تجربة مميزة لتوليد أسئلة تناسب مستواك وتساعدك تتفوق في
-          دراستك.
-          <br />
-          استنّانا قريبًا على WISO 💚
-        </p>
-
-        <div className="mx-auto mt-8 h-1.5 w-48 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full w-2/3 animate-pulse rounded-full bg-lime-300" />
-        </div>
-
-        <p className="mt-5 text-sm text-white/40">
-          بنجهّز حاجة تستاهل تستناها ✨
-        </p>
-      </div>
-    </main>
-  );
-}
+  
 
   const exportPdf = useMutation({
     mutationFn: async () => {
