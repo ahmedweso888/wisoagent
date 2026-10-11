@@ -69,7 +69,8 @@ function OnboardingPage() {
     },
   });
 
-  const save = useMutation({
+  
+const save = useMutation({
   mutationFn: async () => {
     const stage = stages.data?.find((item) => item.slug === schoolYear);
 
@@ -101,8 +102,19 @@ function OnboardingPage() {
 
     if (profileError) throw profileError;
   },
-    onError: (e: Error) => toast.error(e.message),
-  });
+
+  onSuccess: async () => {
+    await qc.invalidateQueries();
+    toast.success("تم تسجيل بياناتك بنجاح");
+    await navigate({ to: "/dashboard" });
+  },
+
+  onError: (e: Error) => {
+    toast.error(e.message);
+  },
+});
+
+
 
   return (
     <main dir="rtl" className="page-shell max-w-2xl">
