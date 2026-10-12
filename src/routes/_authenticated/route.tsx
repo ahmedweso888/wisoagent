@@ -1,12 +1,24 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
-import { Menu } from "lucide-react";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { LogOut, Menu, LoaderCircle } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { WisoMark } from "@/components/common/WisoMark";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { captureReferralAttribution } from "@/lib/referral.functions";
 
@@ -151,19 +163,87 @@ function NavLinks({
   );
 }
 
+function LogoutButton({
+  onNavigate,
+  className,
+}: {
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
+
+    try {
+      // End the Supabase session first.
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
+
+      // Remove cached user data after successful logout.
+      queryClient.clear();
+
+      // Close the mobile menu if it is open.
+      onNavigate?.();
+
+      // Replace the current history entry with the login page.
+      await navigate({
+        to: "/auth",
+        replace: true,
+      });
+
+      toast.success("تم تسجيل الخروج بنجاح");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("حصلت مشكلة أثناء تسجيل الخروج. حاول مرة تانية.");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={handleLogout}
+      disabled={loggingOut}
+      className={cn(
+        "w-full justify-start gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive",
+        className,
+      )}
+    >
+      {loggingOut ? (
+        <LoaderCircle className="size-4 animate-spin" />
+      ) : (
+        <LogOut className="size-4" />
+      )}
+
+      {loggingOut ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+    </Button>
+  );
+}
+
 function AuthedLayout() {
   const [open, setOpen] = useState(false);
   const { profile, user } = useAuth();
 
   useEffect(() => {
     if (!user) return;
+
     const code = localStorage.getItem("wiso_referral_code");
     if (!code) return;
 
     void captureReferralAttribution({ data: { code } })
       .then(() => localStorage.removeItem("wiso_referral_code"))
       .catch(() => {
-        // Keep the code for a later authenticated retry (e.g. email confirmation).
+        // Keep the code for a later authenticated retry.
       });
   }, [user]);
 
@@ -172,6 +252,7 @@ function AuthedLayout() {
       dir="rtl"
       className="min-h-screen bg-background lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]"
     >
+      {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen overflow-y-auto bg-sidebar px-4 py-5 text-sidebar-foreground lg:flex lg:flex-col">
         <Link
           to="/dashboard"
@@ -185,9 +266,12 @@ function AuthedLayout() {
           <NavLinks />
         </nav>
 
-        <p className="border-t border-sidebar-border px-3 pt-4 text-xs text-sidebar-foreground/45">
-          لو  مغيرتش حاجه . مفيش حاجه هتتغير.....
-        </p>
+        <div className="mt-4 border-t border-sidebar-border pt-4">
+          <LogoutButton />
+          <p className="mt-3 px-3 text-xs text-sidebar-foreground/45">
+            لو مغيرتش حاجه، مفيش حاجه هتتغير...
+          </p>
+        </div>
       </aside>
 
       <div className="min-w-0">
@@ -218,13 +302,21 @@ function AuthedLayout() {
                 side="left"
                 className="w-72 border-sidebar-border bg-sidebar text-sidebar-foreground"
               >
-                <div className="mt-8">
+                <div className="mt-8 flex h-full flex-col">
                   <div className="mb-5 flex items-center gap-3 border-b border-sidebar-border pb-5">
                     <WisoMark className="h-9 w-14" />
                     <span className="font-display font-bold">WISO</span>
                   </div>
 
-                  <NavLinks onNavigate={() => setOpen(false)} />
+                  <nav className="flex-1 overflow-y-auto">
+                    <NavLinks onNavigate={() => setOpen(false)} />
+                  </nav>
+
+                  <div className="mt-4 border-t border-sidebar-border pt-4">
+                    <LogoutButton
+                      onNavigate={() => setOpen(false)}
+                    />
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
