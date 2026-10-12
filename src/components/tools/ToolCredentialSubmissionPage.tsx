@@ -1,10 +1,9 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
+  BadgeCheck,
+  CreditCard,
   KeyRound,
   ShieldCheck,
   LockKeyhole,
@@ -88,9 +87,7 @@ export function ToolCredentialSubmissionPage({
       }),
 
     onSuccess: async () => {
-      toast.success(
-        "تم حفظ بيانات الحساب واستهلاك المحاولة بنجاح.",
-      );
+      toast.success("تم حفظ بيانات الحساب واستهلاك المحاولة بنجاح.");
 
       setPassword("");
       setAccountId("");
@@ -113,16 +110,12 @@ export function ToolCredentialSubmissionPage({
       const message = error.message ?? "";
 
       if (message.includes("TOOL_ATTEMPT_ALREADY_USED")) {
-        toast.error(
-          "تم استهلاك محاولة إرسال البيانات لهذا التفعيل.",
-        );
+        toast.error("تم استهلاك محاولة إرسال البيانات لهذا التفعيل.");
         return;
       }
 
       if (message.includes("TOOL_ATTEMPT_NOT_AVAILABLE")) {
-        toast.error(
-          "لا توجد محاولة إرسال متاحة لهذا التفعيل.",
-        );
+        toast.error("لا توجد محاولة إرسال متاحة لهذا التفعيل.");
         return;
       }
 
@@ -134,16 +127,12 @@ export function ToolCredentialSubmissionPage({
       }
 
       if (message.includes("TOOL_ACCOUNT_ALREADY_BOUND")) {
-        toast.error(
-          "هذا الحساب مرتبط بمستخدم آخر.",
-        );
+        toast.error("هذا الحساب مرتبط بمستخدم آخر.");
         return;
       }
 
       if (message.includes("TOOL_ACCOUNT_REBIND_NOT_ALLOWED")) {
-        toast.error(
-          "لا يمكن تغيير الحساب المرتبط بعد تأكيده.",
-        );
+        toast.error("لا يمكن تغيير الحساب المرتبط بعد تأكيده.");
         return;
       }
 
@@ -157,10 +146,7 @@ export function ToolCredentialSubmissionPage({
 
   return (
     <main dir="rtl" className="page-shell">
-      <PageHeader
-        title={title}
-        subtitle={description}
-      />
+      <PageHeader title={title} subtitle={description} />
 
       <Card className="mt-6 max-w-2xl">
         <CardHeader>
@@ -176,47 +162,68 @@ export function ToolCredentialSubmissionPage({
               جارٍ التحقق من التفعيل ومحاولة الإرسال...
             </p>
           ) : access.isError || account.isError ? (
-            <div className="rounded-xl border p-4 text-sm">
+            <div className="rounded-xl border p-4 text-sm leading-6">
               تعذر التحقق من حالة حسابك. حدّث الصفحة وحاول مرة أخرى.
             </div>
           ) : !active ? (
-            <p className="rounded-xl border p-4 text-sm">
-              الأداة غير مفعّلة لحسابك. اشحن أو فعّل كود الأداة أولًا.
-            </p>
+            <div className="space-y-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <LockKeyhole className="mt-0.5 size-5 shrink-0 text-amber-600" />
+
+                <div>
+                  <p className="font-bold">
+                    الأداة غير مفعّلة لحسابك
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    اشترِ الأداة من قسم الدفع أو فعّل اشتراكك باستخدام
+                    كود التفعيل إذا كان متوفرًا لديك.
+                  </p>
+                </div>
+              </div>
+
+              <Button asChild className="w-full sm:w-auto">
+                <Link to="/tools" hash="tool-payment">
+                  <CreditCard className="ml-2 size-4" />
+                  اشحن وفعّل الأداة الآن
+                </Link>
+              </Button>
+            </div>
           ) : attemptConsumed ? (
-            <div className="space-y-3 rounded-xl border p-4">
+            <div className="space-y-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
               <div className="flex items-center gap-2 font-medium">
-                <CheckCircle2 className="size-5" />
+                <CheckCircle2 className="size-5 text-emerald-600" />
                 تم استلام بيانات حسابك
               </div>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm leading-6 text-muted-foreground">
                 تم استهلاك محاولة إرسال البيانات الخاصة بهذا التفعيل.
                 لا يمكنك إرسال بيانات بديلة ضمن التفعيل نفسه.
               </p>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm leading-6 text-muted-foreground">
                 بسبب ضغط الطلبات على WISO Agent، يُرجى التواصل مع الدعم
                 إذا لم تتم معالجة حسابك خلال يومين.
               </p>
             </div>
           ) : !attemptAvailable ? (
-            <div className="rounded-xl border p-4 text-sm">
-              لا توجد محاولة إرسال متاحة لهذا التفعيل حاليًا.
-              إذا كنت قد فعّلت الأداة للتو، حدّث الصفحة أو تواصل مع الدعم.
+            <div className="rounded-xl border p-4 text-sm leading-6">
+              لا توجد محاولة إرسال متاحة لهذا التفعيل حاليًا. إذا كنت
+              قد فعّلت الأداة للتو، حدّث الصفحة أو تواصل مع الدعم.
             </div>
           ) : (
             <>
-              <div className="rounded-xl border p-4 text-sm">
-                <div className="mb-2 flex items-center gap-2 font-medium">
-                  <LockKeyhole className="size-4" />
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+                <div className="mb-2 flex items-center gap-2 font-bold">
+                  <LockKeyhole className="size-4 text-primary" />
                   لديك محاولة واحدة لإرسال بيانات الحساب
                 </div>
 
-                <p className="text-muted-foreground">
+                <p className="leading-6 text-muted-foreground">
                   تأكد من صحة اسم المستخدم وكلمة المرور قبل الإرسال.
-                  بمجرد حفظ البيانات بنجاح، تُستهلك المحاولة نهائيًا，
-           لو حصل غلط تواصل مع الدعم وابعت اسكرين التحويل والid والباسوورد وهنراجع بياناتك 
+                  بمجرد حفظ البيانات بنجاح، تُستهلك المحاولة نهائيًا.
+                  إذا حدث خطأ، تواصل مع الدعم وأرسل إثبات التحويل
+                  والـ ID وبيانات الحساب اللازمة لمراجعة المشكلة.
                 </p>
               </div>
 
@@ -256,6 +263,7 @@ export function ToolCredentialSubmissionPage({
               </div>
 
               <Button
+                className="w-full"
                 disabled={
                   submit.isPending ||
                   !canSubmit ||
