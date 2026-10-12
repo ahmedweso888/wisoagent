@@ -298,27 +298,33 @@ function AuthedLayout() {
                 </Button>
               </SheetTrigger>
 
-              <SheetContent
-                side="left"
-                className="w-72 border-sidebar-border bg-sidebar text-sidebar-foreground"
-              >
-                <div className="mt-8 flex h-full flex-col">
-                  <div className="mb-5 flex items-center gap-3 border-b border-sidebar-border pb-5">
-                    <WisoMark className="h-9 w-14" />
-                    <span className="font-display font-bold">WISO</span>
-                  </div>
+              
+<SheetContent
+  side="left"
+  className="flex h-dvh w-72 flex-col overflow-hidden border-sidebar-border bg-sidebar p-0 text-sidebar-foreground"
+>
+  {/* رأس القائمة */}
+  <div className="shrink-0 px-4 pt-8">
+    <div className="flex items-center gap-3 border-b border-sidebar-border pb-5">
+      <WisoMark className="h-9 w-14" />
+      <span className="font-display font-bold">WISO</span>
+    </div>
+  </div>
 
-                  <nav className="flex-1 overflow-y-auto">
-                    <NavLinks onNavigate={() => setOpen(false)} />
-                  </nav>
+  {/* منطقة الروابط القابلة للتمرير */}
+  <nav
+    className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5"
+    style={{ WebkitOverflowScrolling: "touch" }}
+  >
+    <NavLinks onNavigate={() => setOpen(false)} />
+  </nav>
 
-                  <div className="mt-4 border-t border-sidebar-border pt-4">
-                    <LogoutButton
-                      onNavigate={() => setOpen(false)}
-                    />
-                  </div>
-                </div>
-              </SheetContent>
+  {/* زر تسجيل الخروج ثابت أسفل القائمة */}
+  <div className="shrink-0 border-t border-sidebar-border bg-sidebar p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <LogoutButton onNavigate={() => setOpen(false)} />
+  </div>
+</SheetContent>
+
             </Sheet>
           </div>
         </header>
