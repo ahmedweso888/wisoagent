@@ -447,22 +447,57 @@ export const adminGenerateCenterCodes = createServerFn({ method: "POST" })
       if (!plan) throw new Error("plan_not_found");
     }
 
-    const prefix =
-      codeType === "sprix" ? "WISO-SPRIX-" :
-      codeType === "qureo" ? "WISO-QUREO-" :
-      codeType === "sprix_qureo" ? "WISO-TOOLS-" : "WISO-";
+    
+const { randomInt } = await import("node:crypto");
+const prefix = codeType === "question" ? "20" : "10";
 
-    const rows = Array.from({ length: data.count }, () => ({
-      center_id: data.center,
-      plan_id: codeType === "question" ? data.plan as string : null,
-      code_type: codeType,
-      expires_at: data.expiresAt || null,
-      sprix_access_days: codeType === "question" ? null : data.sprixAccessDays ?? 30,
-      code: `${prefix}${crypto.randomUUID().replace(/-/g, "").toUpperCase()}`,
-    }));
+const generateNumericCode = () =>
+prefix + Array.from({ length: 14 }, () => randomInt(0, 10)).join("");
 
-    const { error: insertError } = await supabaseAdmin.from("center_codes").insert(rows);
-    if (insertError) throw insertError;
+let inserted = false;
+let lastInsertError: { code?: string; message?: string } | null = null;
+
+for (let attempt = 0; attempt < 10; attempt++) {
+  const generatedCodes = new Set<string>();
+
+  while (generatedCodes.size < data.count) {
+    generatedCodes.add(generateNumericCode());
+  }
+
+  const rows = Array.from(generatedCodes, (code) => ({
+    center_id: data.center,
+    plan_id: codeType === "question" ? (data.plan as string) : null,
+    code_type: codeType,
+    expires_at: data.expiresAt || null,
+    sprix_access_days:
+      codeType === "question" ? null : data.sprixAccessDays ?? 30,
+    code,
+  }));
+
+  const { error: insertError } = await supabaseAdmin
+    .from("center_codes")
+    .insert(rows);
+
+  if (!insertError) {
+    inserted = true;
+    break;
+  }
+
+  lastInsertError = insertError;
+
+  if (insertError.code !== "23505") {
+    throw insertError;
+  }
+}
+
+if (!inserted) {
+  throw new Error(
+    lastInsertError?.code === "23505"
+      ? "code_generation_conflict"
+      : lastInsertError?.message ?? "code_generation_failed",
+  );
+}
+
 
     await supabaseAdmin.from("admin_audit_logs").insert({
       admin_id: context.adminId,
