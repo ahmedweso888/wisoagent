@@ -171,7 +171,7 @@ screenshotPath =
           <Input
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            placeholder="WISO-XXXXXXXX"
+            placeholder="أدخل كود التفعيل المكوّن من 16 رقمًا"
           />
           <Button disabled={!code || redeem.isPending} onClick={() => redeem.mutate()}>
             تفعيل

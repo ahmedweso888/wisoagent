@@ -448,55 +448,57 @@ export const adminGenerateCenterCodes = createServerFn({ method: "POST" })
     }
 
     
-const { randomInt } = await import("node:crypto");
-const prefix = codeType === "question" ? "20" : "10";
+    const { randomInt } = await import("node:crypto");
 
-const generateNumericCode = () =>
-prefix + Array.from({ length: 14 }, () => randomInt(0, 10)).join("");
+    const prefix = codeType === "question" ? "20" : "10";
 
-let inserted = false;
-let lastInsertError: { code?: string; message?: string } | null = null;
+    const generateNumericCode = () =>
+      prefix +
+      Array.from({ length: 14 }, () => randomInt(0, 10)).join("");
 
-for (let attempt = 0; attempt < 10; attempt++) {
-  const generatedCodes = new Set<string>();
+    let inserted = false;
+    let lastInsertError: { code?: string; message?: string } | null = null;
 
-  while (generatedCodes.size < data.count) {
-    generatedCodes.add(generateNumericCode());
-  }
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const generatedCodes = new Set<string>();
 
-  const rows = Array.from(generatedCodes, (code) => ({
-    center_id: data.center,
-    plan_id: codeType === "question" ? (data.plan as string) : null,
-    code_type: codeType,
-    expires_at: data.expiresAt || null,
-    sprix_access_days:
-      codeType === "question" ? null : data.sprixAccessDays ?? 30,
-    code,
-  }));
+      while (generatedCodes.size < data.count) {
+        generatedCodes.add(generateNumericCode());
+      }
 
-  const { error: insertError } = await supabaseAdmin
-    .from("center_codes")
-    .insert(rows);
+      const rows = Array.from(generatedCodes, (code) => ({
+        center_id: data.center,
+        plan_id: codeType === "question" ? (data.plan as string) : null,
+        code_type: codeType,
+        expires_at: data.expiresAt || null,
+        sprix_access_days:
+          codeType === "question" ? null : data.sprixAccessDays ?? 30,
+        code,
+      }));
 
-  if (!insertError) {
-    inserted = true;
-    break;
-  }
+      const { error: insertError } = await supabaseAdmin
+        .from("center_codes")
+        .insert(rows);
 
-  lastInsertError = insertError;
+      if (!insertError) {
+        inserted = true;
+        break;
+      }
 
-  if (insertError.code !== "23505") {
-    throw insertError;
-  }
-}
+      lastInsertError = insertError;
 
-if (!inserted) {
-  throw new Error(
-    lastInsertError?.code === "23505"
-      ? "code_generation_conflict"
-      : lastInsertError?.message ?? "code_generation_failed",
-  );
-}
+      if (insertError.code !== "23505") {
+        throw insertError;
+      }
+    }
+
+    if (!inserted) {
+      throw new Error(
+        lastInsertError?.code === "23505"
+          ? "code_generation_conflict"
+          : lastInsertError?.message ?? "code_generation_failed",
+      );
+    }
 
 
     await supabaseAdmin.from("admin_audit_logs").insert({

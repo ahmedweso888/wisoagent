@@ -488,7 +488,7 @@ function ToolsPage() {
                 id="tool-activation-code"
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
-                placeholder="WISO-SPRIX-... / WISO-QUREO-..."
+                placeholder="أدخل كود التفعيل المكوّن من 16 رقمًا"
                 autoComplete="off"
                 disabled={redeem.isPending}
               />
