@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   LockKeyhole,
   CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +44,15 @@ export function ToolCredentialSubmissionPage({
 
   const [accountId, setAccountId] = useState("");
   const [password, setPassword] = useState("");
+  const [showFirstConfirmation, setShowFirstConfirmation] = useState(false);
+  const [showSecondConfirmation, setShowSecondConfirmation] = useState(false);
+
+  useEffect(() => {
+    toast("من فضلك اقرأ التعليمات", {
+      description: "تأكد من قراءة التعليمات ومراجعة بياناتك قبل الإرسال.",
+      duration: 6000,
+    });
+  }, []);
 
   const access = useQuery({
     queryKey: ["wiso-tools-access"],
@@ -91,6 +101,8 @@ export function ToolCredentialSubmissionPage({
 
       setPassword("");
       setAccountId("");
+      setShowFirstConfirmation(false);
+      setShowSecondConfirmation(false);
 
       await Promise.all([
         qc.invalidateQueries({
@@ -120,9 +132,7 @@ export function ToolCredentialSubmissionPage({
       }
 
       if (message.includes("TOOL_ACCESS_REQUIRED")) {
-        toast.error(
-          "الأداة غير مفعّلة لحسابك أو انتهت صلاحية التفعيل.",
-        );
+        toast.error("الأداة غير مفعّلة لحسابك أو انتهت صلاحية التفعيل.");
         return;
       }
 
@@ -143,6 +153,21 @@ export function ToolCredentialSubmissionPage({
   });
 
   const isLoading = access.isLoading || account.isLoading;
+
+  const handleFirstConfirmation = () => {
+    if (!accountId.trim() || !password) {
+      toast.error("من فضلك أدخل الـ ID وكلمة المرور أولًا.");
+      return;
+    }
+
+    setShowFirstConfirmation(false);
+    setShowSecondConfirmation(true);
+  };
+
+  const handleFinalConfirmation = () => {
+    setShowSecondConfirmation(false);
+    submit.mutate();
+  };
 
   return (
     <main dir="rtl" className="page-shell">
@@ -171,9 +196,7 @@ export function ToolCredentialSubmissionPage({
                 <LockKeyhole className="mt-0.5 size-5 shrink-0 text-amber-600" />
 
                 <div>
-                  <p className="font-bold">
-                    الأداة غير مفعّلة لحسابك
-                  </p>
+                  <p className="font-bold">الأداة غير مفعّلة لحسابك</p>
 
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
                     اشترِ الأداة من قسم الدفع أو فعّل اشتراكك باستخدام
@@ -236,27 +259,21 @@ export function ToolCredentialSubmissionPage({
                   id="tool-account-id"
                   autoComplete="username"
                   value={accountId}
-                  onChange={(event) =>
-                    setAccountId(event.target.value)
-                  }
+                  onChange={(event) => setAccountId(event.target.value)}
                   maxLength={200}
                   disabled={submit.isPending}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tool-account-password">
-                  Password
-                </Label>
+                <Label htmlFor="tool-account-password">Password</Label>
 
                 <Input
                   id="tool-account-password"
                   type="password"
                   autoComplete="current-password"
                   value={password}
-                  onChange={(event) =>
-                    setPassword(event.target.value)
-                  }
+                  onChange={(event) => setPassword(event.target.value)}
                   maxLength={500}
                   disabled={submit.isPending}
                 />
@@ -270,10 +287,9 @@ export function ToolCredentialSubmissionPage({
                   !accountId.trim() ||
                   !password
                 }
-                onClick={() => submit.mutate()}
+                onClick={() => setShowFirstConfirmation(true)}
               >
                 <KeyRound className="ml-2 size-4" />
-
                 {submit.isPending
                   ? "جارٍ حفظ البيانات..."
                   : "تأكيد وإرسال بيانات الحساب"}
@@ -282,6 +298,106 @@ export function ToolCredentialSubmissionPage({
           )}
         </CardContent>
       </Card>
+
+    
+
+      {/* نافذة التأكيد الأولى */}
+      {showFirstConfirmation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+          dir="rtl"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="first-confirmation-title"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-cyan-400/40 bg-black p-6 shadow-[0_0_35px_rgba(34,211,238,0.15)]">
+            <div className="mb-4 flex items-center gap-3">
+              <ShieldCheck className="size-7 text-cyan-300" />
+
+              <h2
+                id="first-confirmation-title"
+                className="text-lg font-bold text-cyan-300"
+              >
+                تأكيد صحة البيانات
+              </h2>
+            </div>
+
+            <p className="text-sm leading-7 text-white/85">
+              هل أنت متأكد من صحة الـ ID وكلمة المرور التي أدخلتهما؟
+              يرجى مراجعتهما جيدًا قبل المتابعة.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button
+                className="flex-1"
+                onClick={handleFirstConfirmation}
+              >
+                نعم، متأكد
+              </Button>
+
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowFirstConfirmation(false)}
+              >
+                مراجعة البيانات
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة التأكيد الثانية */}
+      {showSecondConfirmation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+          dir="rtl"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="second-confirmation-title"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-cyan-400/40 bg-black p-6 shadow-[0_0_35px_rgba(34,211,238,0.15)]">
+            <div className="mb-4 flex items-center gap-3">
+              <LockKeyhole className="size-7 text-cyan-300" />
+
+              <h2
+                id="second-confirmation-title"
+                className="text-lg font-bold text-cyan-300"
+              >
+                تأكيد أخير قبل الإرسال
+              </h2>
+            </div>
+
+            <p className="text-sm leading-7 text-white/85">
+              هل أنت متأكد أن البيانات التي أدخلتها هي نفس البيانات التي
+              تستخدمها لتسجيل الدخول إلى منصة الوزارة الرسمية؟
+            </p>
+
+            <p className="mt-3 text-sm leading-7 text-amber-300">
+              بمجرد نجاح الحفظ، ستُستهلك محاولة الإرسال الخاصة بهذا التفعيل.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button
+                className="flex-1"
+                disabled={submit.isPending}
+                onClick={handleFinalConfirmation}
+              >
+                {submit.isPending ? "جارٍ الإرسال..." : "نعم، البيانات صحيحة"}
+              </Button>
+
+              <Button
+                variant="outline"
+                className="flex-1"
+                disabled={submit.isPending}
+                onClick={() => setShowSecondConfirmation(false)}
+              >
+                رجوع للمراجعة
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
