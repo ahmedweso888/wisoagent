@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CenterRequestRouteImport } from './routes/center-request'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGenerateRouteImport } from './routes/_authenticated/generate'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -60,6 +61,11 @@ const AuthRoute = AuthRouteImport.update({
 const CenterRequestRoute = CenterRequestRouteImport.update({
   id: '/center-request',
   path: '/center-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/center-request': typeof CenterRequestRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/generate': typeof AuthenticatedGenerateRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/center-request': typeof CenterRequestRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/generate': typeof AuthenticatedGenerateRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/center-request': typeof CenterRequestRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/generate': typeof AuthenticatedGenerateRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/center-request'
+    | '/reset-password'
     | '/dashboard'
     | '/generate'
     | '/notifications'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/center-request'
+    | '/reset-password'
     | '/dashboard'
     | '/generate'
     | '/notifications'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/center-request'
+    | '/reset-password'
     | '/_authenticated/dashboard'
     | '/_authenticated/generate'
     | '/_authenticated/notifications'
@@ -435,6 +447,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CenterRequestRoute: typeof CenterRequestRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   InviteCodeRoute: typeof InviteCodeRoute
 }
 
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       path: '/center-request'
       fullPath: '/center-request'
       preLoaderRoute: typeof CenterRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -744,6 +764,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CenterRequestRoute: CenterRequestRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   InviteCodeRoute: InviteCodeRoute,
 }
 export const routeTree = rootRouteImport
