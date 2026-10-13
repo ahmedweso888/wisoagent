@@ -27,6 +27,7 @@ import { Route as AuthenticatedSprixRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedWorkWithWisoRouteImport } from './routes/_authenticated/work-with-wiso'
+import { Route as ApiPushRouteImport } from './routes/api/push'
 import { Route as InviteCodeRouteImport } from './routes/invite.$code'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
@@ -135,6 +136,11 @@ const AuthenticatedWorkWithWisoRoute =
     path: '/work-with-wiso',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPushRoute = ApiPushRouteImport.update({
+  id: '/api/push',
+  path: '/api/push',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteCodeRoute = InviteCodeRouteImport.update({
   id: '/invite/$code',
   path: '/invite/$code',
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/tools': typeof AuthenticatedToolsRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/work-with-wiso': typeof AuthenticatedWorkWithWisoRoute
+  '/api/push': typeof ApiPushRoute
   '/invite/$code': typeof InviteCodeRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/bundles': typeof AuthenticatedAdminBundlesRoute
@@ -279,6 +286,7 @@ export interface FileRoutesByTo {
   '/tools': typeof AuthenticatedToolsRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/work-with-wiso': typeof AuthenticatedWorkWithWisoRoute
+  '/api/push': typeof ApiPushRoute
   '/invite/$code': typeof InviteCodeRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/bundles': typeof AuthenticatedAdminBundlesRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/_authenticated/work-with-wiso': typeof AuthenticatedWorkWithWisoRoute
+  '/api/push': typeof ApiPushRoute
   '/invite/$code': typeof InviteCodeRoute
   '/_authenticated/admin/ai': typeof AuthenticatedAdminAiRoute
   '/_authenticated/admin/bundles': typeof AuthenticatedAdminBundlesRoute
@@ -353,6 +362,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/wallet'
     | '/work-with-wiso'
+    | '/api/push'
     | '/invite/$code'
     | '/admin/ai'
     | '/admin/bundles'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/wallet'
     | '/work-with-wiso'
+    | '/api/push'
     | '/invite/$code'
     | '/admin/ai'
     | '/admin/bundles'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tools'
     | '/_authenticated/wallet'
     | '/_authenticated/work-with-wiso'
+    | '/api/push'
     | '/invite/$code'
     | '/_authenticated/admin/ai'
     | '/_authenticated/admin/bundles'
@@ -448,6 +460,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CenterRequestRoute: typeof CenterRequestRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPushRoute: typeof ApiPushRoute
   InviteCodeRoute: typeof InviteCodeRoute
 }
 
@@ -578,6 +591,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/work-with-wiso'
       preLoaderRoute: typeof AuthenticatedWorkWithWisoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/push': {
+      id: '/api/push'
+      path: '/api/push'
+      fullPath: '/api/push'
+      preLoaderRoute: typeof ApiPushRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/invite/$code': {
       id: '/invite/$code'
@@ -765,6 +785,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CenterRequestRoute: CenterRequestRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPushRoute: ApiPushRoute,
   InviteCodeRoute: InviteCodeRoute,
 }
 export const routeTree = rootRouteImport
