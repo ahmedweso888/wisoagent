@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BadgeCheck,
-  CreditCard,
   KeyRound,
   ShieldCheck,
   LockKeyhole,
@@ -16,6 +14,7 @@ import {
   getMyToolAccess,
   getToolAccountStatus,
   linkToolAccount,
+  linkToolAccounts,
 } from "@/lib/wiso-tools.functions";
 
 import { PageHeader } from "@/components/common/PageHeader";
@@ -33,14 +32,18 @@ type ToolKey = "qureo" | "financial_literacy";
 
 export function ToolCredentialSubmissionPage({
   toolKey,
+  toolKeys,
   title,
   description,
 }: {
   toolKey: ToolKey;
+  toolKeys?: ToolKey[];
   title: string;
   description: string;
 }) {
   const qc = useQueryClient();
+  const submissionToolKeys = toolKeys?.length ? toolKeys : [toolKey];
+  const combined = submissionToolKeys.length > 1;
 
   const [accountId, setAccountId] = useState("");
   const [password, setPassword] = useState("");
@@ -60,17 +63,22 @@ export function ToolCredentialSubmissionPage({
   });
 
   const account = useQuery({
-    queryKey: ["wiso-tool-account", toolKey],
-    queryFn: () =>
-      getToolAccountStatus({
-        data: { toolKey },
-      }),
+    queryKey: ["wiso-tool-account", ...submissionToolKeys],
+    queryFn: async () => {
+      const statuses = await Promise.all(submissionToolKeys.map((key) =>
+        getToolAccountStatus({ data: { toolKey: key } })
+      ));
+      return {
+        linked: statuses.every((item) => item.linked),
+        verifiedAt: statuses.map((item) => item.verifiedAt).filter(Boolean)[0] ?? null,
+        attemptConsumed: statuses.some((item) => item.attemptConsumed),
+        attemptAvailable: statuses.every((item) => item.attemptAvailable),
+      };
+    },
   });
 
   const active =
-    access.data?.some(
-      (item) => item.tool_key === toolKey && item.available,
-    ) ?? false;
+    submissionToolKeys.every((key) => access.data?.some((item) => item.tool_key === key && item.available) ?? false);
 
   const accountStatus = account.data as
     | {
@@ -87,14 +95,20 @@ export function ToolCredentialSubmissionPage({
   const canSubmit = active && attemptAvailable && !attemptConsumed;
 
   const submit = useMutation({
-    mutationFn: () =>
-      linkToolAccount({
+    mutationFn: async () => {
+      if (combined) {
+        return linkToolAccounts({ data: { toolKeys: submissionToolKeys, id: accountId.trim(), password } });
+      }
+
+      const result = await linkToolAccount({
         data: {
           toolKey,
           id: accountId.trim(),
           password,
         },
-      }),
+      });
+      return { linked: true as const, result };
+    },
 
     onSuccess: async () => {
       toast.success("تم حفظ بيانات الحساب واستهلاك المحاولة بنجاح.");
@@ -106,7 +120,7 @@ export function ToolCredentialSubmissionPage({
 
       await Promise.all([
         qc.invalidateQueries({
-          queryKey: ["wiso-tool-account", toolKey],
+          queryKey: ["wiso-tool-account", ...submissionToolKeys],
         }),
         qc.invalidateQueries({
           queryKey: ["wiso-tools-access"],
@@ -116,7 +130,7 @@ export function ToolCredentialSubmissionPage({
 
     onError: async (error: Error) => {
       await qc.invalidateQueries({
-        queryKey: ["wiso-tool-account", toolKey],
+        queryKey: ["wiso-tool-account"],
       });
 
       const message = error.message ?? "";
@@ -205,12 +219,7 @@ export function ToolCredentialSubmissionPage({
                 </div>
               </div>
 
-              <Button asChild className="w-full sm:w-auto">
-                <Link to="/tools" hash="tool-payment">
-                  <CreditCard className="ml-2 size-4" />
-                  اشحن وفعّل الأداة الآن
-                </Link>
-              </Button>
+
             </div>
           ) : attemptConsumed ? (
             <div className="space-y-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">

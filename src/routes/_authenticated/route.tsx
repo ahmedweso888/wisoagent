@@ -88,8 +88,6 @@ const NAV = [
   { to: "/wallet", label: "شحن المحفظة" },
   { to: "/requests", label: "الطلبات الخاصة" },
   { to: "/tools", label: "أدوات WISO" },
-  { to: "/sprix", label: "الثقافة المالية" },
-  { to: "/qureo", label: "Qureo" },
   { to: "/work-with-wiso", label: "اشتغل مع WISO" },
   { to: "/notifications", label: "الإشعارات" },
   { to: "/settings", label: "الإعدادات" },
@@ -109,7 +107,6 @@ const ADMIN_NAV = [
   { to: "/admin/requests", label: "الطلبات الخاصة" },
   { to: "/admin/center-requests", label: "طلبات السناتر" },
   { to: "/admin/tools", label: "أدوات WISO" },
-  { to: "/admin/sprix", label: "SPRIX Legacy" },
   { to: "/admin/system", label: "إعدادات النظام" },
 ] as const;
 

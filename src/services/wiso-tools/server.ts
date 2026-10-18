@@ -195,6 +195,37 @@ export async function saveToolAccount(
     verified_at: string | null;
   };
 }
+
+export async function saveToolAccountsAtomically(
+  userId: string,
+  toolKeys: ToolKey[],
+  id: string,
+  password: string,
+) {
+  const uniqueKeys = [...new Set(toolKeys)];
+  if (uniqueKeys.length < 2 || uniqueKeys.some((key) => !["financial_literacy", "qureo"].includes(key))) {
+    throw new Error("INVALID_TOOL_SET");
+  }
+  const accountIdHash = hashToolAccountId(id);
+  const credentialCiphertext = encryptToolCredentials({ id, password });
+  const { data, error } = await (supabaseAdmin as any).rpc("wiso_save_tool_accounts_atomically", {
+    _user_id: userId,
+    _tool_keys: uniqueKeys,
+    _account_id_hash: accountIdHash,
+    _credential_ciphertext: credentialCiphertext,
+    _encryption_version: 1,
+  });
+  if (error) {
+    const message = String(error.message ?? "");
+    for (const code of ["TOOL_ATTEMPT_ALREADY_USED", "TOOL_ATTEMPT_NOT_AVAILABLE", "TOOL_ACCOUNT_ALREADY_BOUND", "TOOL_ACCOUNT_REBIND_NOT_ALLOWED", "TOOL_ACCESS_REQUIRED", "TOOL_CREDENTIALS_INVALID"]) {
+      if (message.includes(code)) throw new Error(code);
+    }
+    throw error;
+  }
+  if (!data || typeof data !== "object") throw new Error("TOOL_ACCOUNT_SAVE_FAILED");
+  return data;
+}
+
 export async function listMyToolOrders(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("tool_orders")
@@ -235,8 +266,13 @@ export async function createToolOrder(input: {
   method: "vodafone_cash" | "instapay";
   senderNumber: string;
   screenshotPath: string;
+  accountId: string;
+  password: string;
 }) {
   const product = getToolProduct(input.productKey);
+  if (!input.accountId.trim() || !input.password || input.accountId.length > 200 || input.password.length > 500) {
+    throw new Error("TOOL_CREDENTIALS_INVALID");
+  }
 
   const senderNumber = input.senderNumber
     .trim()
@@ -263,6 +299,9 @@ export async function createToolOrder(input: {
       method: input.method,
       sender_number: senderNumber,
       screenshot_path: input.screenshotPath,
+      account_id_hash: hashToolAccountId(input.accountId),
+      credential_ciphertext: encryptToolCredentials({ id: input.accountId.trim(), password: input.password }),
+      encryption_version: 1,
     })
     .select(
       "id,product_key,amount_egp,method,status,created_at",
@@ -283,9 +322,10 @@ export async function createToolOrder(input: {
 export async function adminListToolOrders(status?: string) {
   let query = supabaseAdmin
     .from("tool_orders")
-    .select("id,user_id,product_key,amount_egp,method,sender_number,screenshot_path,status,reject_reason,reviewed_by,reviewed_at,created_at")
+    .select("id,user_id,product_key,amount_egp,method,sender_number,screenshot_path,status,reject_reason,reviewed_by,reviewed_at,created_at,completed_at")
     .order("created_at", { ascending: false })
     .limit(300);
+  query = query.is("completed_at", null);
   if (status && status !== "all") query = query.eq("status", status);
   const { data, error } = await query;
   if (error) throw error;

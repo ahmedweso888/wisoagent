@@ -10,10 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   adminListToolAccounts,
   adminCompleteToolAccount,
+  adminCompleteToolOrder,
   adminRevealToolCredentials,
   adminGetToolOrders,
   adminGetToolPaymentProofUrl,
   adminReviewToolOrderRequest,
+  adminRevealToolOrderCredentials,
 } from "@/lib/wiso-tools.functions";
 import { getToolCatalogFn } from "@/lib/wiso-tools.functions";
 
@@ -25,6 +27,12 @@ function AdminToolsPage() {
   const orders = useQuery({ queryKey: ["admin-tool-orders", filter], queryFn: () => adminGetToolOrders({ data: { status: filter } }) });
   const accounts = useQuery({ queryKey: ["admin-tool-accounts"], queryFn: () => adminListToolAccounts() });
   const [revealed, setRevealed] = useState<Record<string, { id: string; password: string }>>({});
+  const [revealedOrders, setRevealedOrders] = useState<Record<string, { id: string; password: string }>>({});
+  const revealOrder = useMutation({
+    mutationFn: (orderId: string) => adminRevealToolOrderCredentials({ data: { orderId } }),
+    onSuccess: (data, orderId) => setRevealedOrders((current) => ({ ...current, [orderId]: data })),
+    onError: (error: Error) => toast.error(error.message),
+  });
   const reveal = useMutation({
     mutationFn: (accountId: string) => adminRevealToolCredentials({ data: { accountId } }),
     onSuccess: (data, accountId) => setRevealed((current) => ({ ...current, [accountId]: data })),
@@ -40,6 +48,16 @@ function AdminToolsPage() {
         qc.invalidateQueries({ queryKey: ["admin-tool-accounts"] }),
         qc.invalidateQueries({ queryKey: ["notifications"] }),
       ]);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const completeOrder = useMutation({
+    mutationFn: (orderId: string) => adminCompleteToolOrder({ data: { orderId } }),
+    onSuccess: async () => {
+      toast.success("تم الحل وإخفاء الطلب من قائمة الأدمن.");
+      setRevealedOrders({});
+      await qc.invalidateQueries({ queryKey: ["admin-tool-orders"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -85,14 +103,24 @@ function AdminToolsPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold">{productName(item.product_key)} · {item.amount_egp} ج.م</p>
+                  <p className="mt-1 text-xs text-primary">الأداة المطلوبة: {item.product_key === "financial_literacy_qureo" ? "SPRIX + Qureo" : item.product_key === "qureo" ? "Qureo" : "SPRIX"}</p>
                   <p className="mt-1 text-sm text-muted-foreground">الطالب: {item.user_id}</p>
                   <p className="mt-1 text-sm text-muted-foreground">الطريقة: {item.method} · الرقم: {item.sender_number}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString("ar-EG")}</p>
                 </div>
                 <span className="rounded-full bg-muted px-3 py-1 text-xs">{item.status === "pending" ? "قيد المراجعة" : item.status === "confirmed" ? "مقبول" : "مرفوض"}</span>
               </div>
+              {revealedOrders[item.id] ? <div className="mt-3 rounded-lg bg-muted p-3 text-sm">
+                <p dir="ltr">Account ID: <span className="select-all">{revealedOrders[item.id]?.id}</span></p>
+                <p dir="ltr">Password: <span className="select-all">{revealedOrders[item.id]?.password}</span></p>
+                <Button className="mt-2" size="sm" variant="ghost" onClick={() => setRevealedOrders((current) => { const next = { ...current }; delete next[item.id]; return next; })}>إخفاء بيانات الحساب</Button>
+              </div> : null}
               <div className="mt-4 flex flex-wrap gap-2">
                 {item.screenshot_path ? <Button variant="outline" size="sm" onClick={() => proof.mutate(item.screenshot_path)}><ExternalLink className="size-4" /> فتح Screenshot</Button> : null}
+                <Button variant="outline" size="sm" disabled={revealOrder.isPending} onClick={() => revealOrder.mutate(item.id)}>عرض بيانات الحساب</Button>
+                {item.status !== "pending" ? <Button size="sm" disabled={completeOrder.isPending} onClick={() => {
+                  if (window.confirm("تأكيد أن بيانات هذا الطلب تم حلها؟ سيتم إخفاؤه من قائمة الأدمن.")) completeOrder.mutate(item.id);
+                }}><CheckCircle2 className="size-4" /> تم الحل والإخفاء</Button> : null}
                 {item.status === "pending" ? (
                   <>
                     <Button size="sm" onClick={() => review.mutate({ orderId: item.id, approve: true })} disabled={review.isPending}>Approve + تفعيل</Button>
@@ -121,7 +149,8 @@ function AdminToolsPage() {
             return <div key={account.id} className="rounded-xl border p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold">{account.tool_key === "qureo" ? "Qureo" : "SPRIX / الثقافة المالية"}</p>
+                  <p className="font-semibold">{(accounts.data ?? []).some((other) => other.id !== account.id && other.user_id === account.user_id && other.account_id_hash === account.account_id_hash && other.tool_key !== account.tool_key) ? "SPRIX + Qureo (بيانات حساب مشتركة)" : account.tool_key === "qureo" ? "Qureo" : "SPRIX / الثقافة المالية"}</p>
+                  <p className="text-xs text-muted-foreground">الأداة المرتبطة ببيانات الحساب المرسلة.</p>
                   <p className="text-xs text-muted-foreground">User ID: {account.user_id}</p>
                   <p className="text-xs text-muted-foreground">آخر تحديث: {new Date(account.updated_at).toLocaleString("ar-EG")}</p>
                 </div>

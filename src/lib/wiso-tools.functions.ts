@@ -14,6 +14,8 @@ import {
   getToolProduct,
   hasToolAccess,
   saveToolAccount,
+  saveToolAccountsAtomically,
+  decryptToolCredentials,
 } from "@/services/wiso-tools/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -90,8 +92,13 @@ export const submitToolPayment = createServerFn({
       method: "vodafone_cash" | "instapay";
       senderNumber: string;
       screenshotPath: string;
+      accountId: string;
+      password: string;
     }) => {
       getToolProduct(input.productKey);
+      if (!input.accountId.trim() || !input.password || input.accountId.length > 200 || input.password.length > 500) {
+        throw new Error("TOOL_CREDENTIALS_INVALID");
+      }
 
       return input;
     },
@@ -103,6 +110,8 @@ export const submitToolPayment = createServerFn({
       method: data.method,
       senderNumber: data.senderNumber,
       screenshotPath: data.screenshotPath,
+      accountId: data.accountId,
+      password: data.password,
     });
   });
 
@@ -273,6 +282,23 @@ export const linkToolAccount = createServerFn({
     };
   });
 
+export const linkToolAccounts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { toolKeys: string[]; id: string; password: string }) => {
+    const keys = [...new Set(input.toolKeys.map((key) => toolForPath(key)))];
+    if (keys.length !== 2 || !input.id.trim() || !input.password || input.id.length > 200 || input.password.length > 500) {
+      throw new Error("TOOL_CREDENTIALS_INVALID");
+    }
+    return { toolKeys: keys, id: input.id.trim(), password: input.password };
+  })
+  .handler(async ({ data, context }) => {
+    for (const key of data.toolKeys) {
+      if (!(await hasToolAccess(context.userId, key))) throw new Error("TOOL_ACCESS_REQUIRED");
+    }
+    const result = await saveToolAccountsAtomically(context.userId, data.toolKeys, data.id, data.password);
+    return { linked: true, result };
+  });
+
 /* ============================================================================
  * Admin - list tool accounts
  * ========================================================================== */
@@ -369,6 +395,38 @@ export const adminRevealToolCredentials = createServerFn({
 /* ============================================================================
  * Admin - list tool orders
  * ========================================================================== */
+
+export const adminRevealToolOrderCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAdmin])
+  .inputValidator((input: { orderId: string }) => {
+    if (!input.orderId || input.orderId.length > 100) throw new Error("INVALID_ORDER_ID");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const { data: order, error } = await supabaseAdmin
+      .from("tool_orders")
+      .select("credential_ciphertext")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!order?.credential_ciphertext) throw new Error("TOOL_CREDENTIALS_NOT_FOUND");
+    return decryptToolCredentials(order.credential_ciphertext);
+  });
+
+export const adminCompleteToolOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAdmin])
+  .inputValidator((input: { orderId: string }) => {
+    if (!input.orderId || input.orderId.length > 100) throw new Error("INVALID_ORDER_ID");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { data: result, error } = await supabaseAdmin.rpc("admin_complete_tool_order", {
+      _order_id: data.orderId,
+      _admin_id: context.adminId,
+    });
+    if (error) throw error;
+    return result;
+  });
 
 export const adminGetToolOrders = createServerFn({
   method: "GET",
