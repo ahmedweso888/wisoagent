@@ -797,7 +797,7 @@ return ( <main dir="rtl" className="page-shell"> <PageHeader
               {item.status === "pending"
                 ? "قيد المراجعة"
                 : item.status === "confirmed"
-                  ? "مقبول"
+                  ? "مقبول وتم الحل يمكنك مراجعه حسابك علي منصة الوزارة"
                   : "مرفوض"}
             </span>
           </div>
