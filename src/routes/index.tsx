@@ -172,7 +172,7 @@ function Landing() {
 
   const hero = map.get("hero");
   const heroTitle = hero?.title ?? "وكيلك الذكي في رحلتك نحو التفوق";
-  const heroCta = hero?.cta_label ?? "ابدأ رحلتك الآن";
+  const heroCta = hero?.cta_label ?? "تسجيل الدخول";
 
   return (
     <div dir="rtl" className="min-h-screen bg-background text-foreground">
