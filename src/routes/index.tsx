@@ -171,7 +171,7 @@ function Landing() {
   }));
 
   const hero = map.get("hero");
-  const heroTitle = hero?.title ?? "وكيلك الذكي في رحلتك نحو التفوق";
+  const heroTitle = hero?.title ?? "ويسو ايجنت سهلها عليكم يطلاب البكالوريا";
   const heroCta = hero?.cta_label ?? "تسجيل الدخول";
 
   return (
