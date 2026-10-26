@@ -438,7 +438,41 @@ export const adminGetToolOrders = createServerFn({
     }) => input,
   )
   .handler(async ({ data }) => {
-    return adminListToolOrders(data.status);
+    const orders = await adminListToolOrders(data.status);
+
+    if (!orders.length) {
+      return [];
+    }
+
+    const userIds = [
+      ...new Set(orders.map((order) => order.user_id)),
+    ];
+
+    const { data: profiles, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id,full_name,phone")
+      .in("id", userIds);
+
+    if (error) {
+      throw error;
+    }
+
+    const profilesMap = new Map(
+      (profiles ?? []).map((profile) => [
+        profile.id,
+        profile,
+      ]),
+    );
+
+    return orders.map((order) => {
+      const profile = profilesMap.get(order.user_id);
+
+      return {
+        ...order,
+        student_name: profile?.full_name ?? null,
+        student_phone: profile?.phone ?? null,
+      };
+    });
   });
 
 /* ============================================================================
