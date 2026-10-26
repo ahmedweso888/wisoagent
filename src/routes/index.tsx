@@ -1,10 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { motion, type MotionProps } from "framer-motion";
-import { ArrowLeft, BadgeCheck, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  Check,
+  MessageCircle,
+  PlayCircle,
+  X,
+} from "lucide-react";
 
 import laptopAsset from "@/assets/wiso-laptop.png";
 import { Footer } from "@/components/common/Footer";
-import { SiteHeader, type HeaderLink } from "@/components/common/SiteHeader";
+import {
+  SiteHeader,
+  type HeaderLink,
+} from "@/components/common/SiteHeader";
 import { Button } from "@/components/ui/button";
 import {
   useFaq,
@@ -16,7 +27,7 @@ import {
   type SiteSection,
 } from "@/hooks/useSiteContent";
 import { toArabicSafeNumber } from "@/lib/format";
-<meta name="google-site-verification" content="UIwzs-JkXUIkM6UCZY_rbawdUJeSKoICwWlnOuVpxYw" />
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -27,6 +38,10 @@ export const Route = createFileRoute("/")({
         name: "description",
         content:
           "مش مجرد أسئلة وخلاص. WISO بيفهم منهجك، بيظبطلك خطة مذاكرة، وبيعرفك إيه اللي ناقصك وبيحتاج شغل.",
+      },
+      {
+        name: "google-site-verification",
+        content: "UIwzs-JkXUIkM6UCZY_rbawdUJeSKoICwWlnOuVpxYw",
       },
       {
         property: "og:title",
@@ -75,7 +90,9 @@ function SectionHeading({ section }: { section: SiteSection }) {
   return (
     <div className="max-w-2xl">
       {section.subtitle ? (
-        <p className="text-sm font-bold text-primary">{section.subtitle}</p>
+        <p className="text-sm font-bold text-primary">
+          {section.subtitle}
+        </p>
       ) : null}
 
       {section.title ? (
@@ -126,6 +143,7 @@ function RevealSection({
     </motion.section>
   );
 }
+
 function Landing() {
   const { map, isLoading } = useSectionMap();
   const teachers = useTeachers();
@@ -133,6 +151,9 @@ function Landing() {
   const plans = usePublicPlans();
   const contest = usePublicContest();
   const flags = useFeatureFlags();
+
+  // نافذة دعم المنصة
+  const [supportOpen, setSupportOpen] = useState(false);
 
   const teachersVisible =
     flags.data?.["verified_teachers"] !== false &&
@@ -171,11 +192,15 @@ function Landing() {
   }));
 
   const hero = map.get("hero");
-  const heroTitle = hero?.title ?? "ويسو ايجنت سهلها عليكم يطلاب البكالوريا";
+  const heroTitle =
+    hero?.title ?? "ويسو ايجنت سهلها عليكم يطلاب البكالوريا";
   const heroCta = hero?.cta_label ?? "تسجيل الدخول";
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background text-foreground">
+    <div
+      dir="rtl"
+      className="min-h-screen bg-background text-foreground"
+    >
       <SiteHeader links={navLinks} ctaLabel={heroCta} />
 
       <main className="pt-20 sm:pt-24">
@@ -215,33 +240,77 @@ function Landing() {
                   <motion.p
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.55, delay: 0.06 }}
+                    transition={{
+                      duration: 0.55,
+                      delay: 0.06,
+                    }}
                     className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[var(--hero-muted)] sm:text-lg"
                   >
                     {hero.description}
                   </motion.p>
                 ) : null}
 
+                {/* أزرار الصفحة الرئيسية */}
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.12 }}
+                  transition={{
+                    duration: 0.55,
+                    delay: 0.12,
+                  }}
                   className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start"
                 >
-                  <Button asChild size="lg" className="rounded-full">
+                  {/* تسجيل الدخول */}
+                  <Button
+                    asChild
+                    size="lg"
+                    className="rounded-full"
+                  >
                     <Link to={hero?.cta_href ?? "/auth"}>
                       {heroCta}
                       <ArrowLeft />
                     </Link>
                   </Button>
 
+                  {/* شوف WISO بيشتغل إزاي */}
                   <Button
                     asChild
                     size="lg"
                     variant="outline"
                     className="rounded-full border-[var(--hero-border)] bg-transparent text-[var(--hero-foreground)] hover:bg-[var(--hero-surface-hover)] hover:text-[var(--hero-foreground)]"
                   >
-                    <a href="#how">شوف WISO بيشتغل إزاي</a>
+                    <a href="#how">
+                      شوف WISO بيشتغل إزاي
+                    </a>
+                  </Button>
+
+                  {/* محتاج مساعدة */}
+                  <Button
+                    type="button"
+                    size="lg"
+                    variant="outline"
+                    onClick={() => setSupportOpen(true)}
+                    className="gap-2 rounded-full border-[var(--hero-border)] bg-[var(--hero-surface)] text-[var(--hero-foreground)] transition-all duration-300 hover:scale-105 hover:bg-[var(--hero-surface-hover)] hover:text-[var(--hero-foreground)]"
+                  >
+                    <MessageCircle className="size-5" />
+                    محتاج مساعدة؟
+                  </Button>
+
+                  {/* فيديو شرح إرسال الطلب */}
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="gap-2 rounded-full border-[var(--hero-border)] bg-[var(--hero-surface)] text-[var(--hero-foreground)] transition-all duration-300 hover:scale-105 hover:bg-[var(--hero-surface-hover)] hover:text-[var(--hero-foreground)]"
+                  >
+                    <a
+                      href="/how-to-order.mp4"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <PlayCircle className="size-5" />
+                      إزاي أبعت طلب؟
+                    </a>
                   </Button>
                 </motion.div>
               </div>
@@ -249,7 +318,10 @@ function Landing() {
               <motion.img
                 initial={{ opacity: 0, y: 28 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.16 }}
+                transition={{
+                  duration: 0.7,
+                  delay: 0.16,
+                }}
                 src={laptopAsset}
                 alt="واجهة WISO على اللابتوب"
                 className="hero-laptop relative mx-auto w-full max-w-3xl object-contain drop-shadow-2xl"
@@ -257,62 +329,76 @@ function Landing() {
             </div>
           </div>
         </section>
+
+        {/* WISO TOOLS INTRO */}
         <section>
-  <motion.h1
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.55 }}
-    className="font-display text-4xl font-black leading-[1.15] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-white drop-shadow-[0_0_18px_rgba(255,255,255,0.35)] sm:text-5xl lg:text-7xl"
-  >
-    وعشان WISO حاسس بيك
-    <br />
-    يا طالب البكالوريا
-  </motion.h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+            className="font-display text-4xl font-black leading-[1.15] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-white drop-shadow-[0_0_18px_rgba(255,255,255,0.35)] sm:text-5xl lg:text-7xl"
+          >
+            وعشان WISO حاسس بيك
+            <br />
+            يا طالب البكالوريا
+          </motion.h1>
 
-  <motion.p
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.55, delay: 0.06 }}
-    className="mx-auto mt-6 max-w-3xl text-lg font-extrabold leading-9 text-[var(--hero-foreground)] drop-shadow-[0_0_12px_rgba(255,255,255,0.25)] sm:text-xl lg:text-2xl"
-  >
-    عملنالك{" "}
-    <span className="font-black text-cyan-300 drop-shadow-[0_0_14px_rgba(34,211,238,0.8)]">
-      SPRIX Agent
-    </span>{" "}
-    جوه منصة WISO، كخدمة مستقلة جنب خدمة الأسئلة، عشان تريح بالك من الثقافة
-    المالية وتركز على باقي موادك! ❤️
-    <br />
-    <br />
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.55,
+              delay: 0.06,
+            }}
+            className="mx-auto mt-6 max-w-3xl text-lg font-extrabold leading-9 text-[var(--hero-foreground)] drop-shadow-[0_0_12px_rgba(255,255,255,0.25)] sm:text-xl lg:text-2xl"
+          >
+            عملنالك{" "}
+            <span className="font-black text-cyan-300 drop-shadow-[0_0_14px_rgba(34,211,238,0.8)]">
+              SPRIX Agent
+            </span>{" "}
+            جوه منصة WISO، كخدمة مستقلة جنب خدمة الأسئلة، عشان تريح
+            بالك من الثقافة المالية وتركز على باقي موادك! ❤️
+            <br />
+            <br />
 
-    حلّ مستويات الترم كله مع{" "}
-    <span className="font-black text-cyan-300">SPRIX Agent</span>{" "}
-    مقابل{" "}
-    <span className="font-black text-yellow-300 drop-shadow-[0_0_14px_rgba(250,204,21,0.8)]">
-      60 جنيه بس
-    </span>{" "}
-    😍
-    <br />
+            حلّ مستويات الترم كله مع{" "}
+            <span className="font-black text-cyan-300">
+              SPRIX Agent
+            </span>{" "}
+            مقابل{" "}
+            <span className="font-black text-yellow-300 drop-shadow-[0_0_14px_rgba(250,204,21,0.8)]">
+              60 جنيه بس
+            </span>{" "}
+            😍
+            <br />
 
-    وجميع مستويات{" "}
-    <span className="font-black text-cyan-300">QUREO</span>{" "}
-    مقابل{" "}
-    <span className="font-black text-yellow-300">70 جنيه</span>.
-    <br />
+            وجميع مستويات{" "}
+            <span className="font-black text-cyan-300">
+              QUREO
+            </span>{" "}
+            مقابل{" "}
+            <span className="font-black text-yellow-300">
+              70 جنيه
+            </span>.
+            <br />
 
-    ولو إنت طالب هندسة أو علوم حاسب، تقدر تستفيد من الخدمتين مع بعض مقابل{" "}
-    <span className="font-black text-yellow-300 drop-shadow-[0_0_14px_rgba(250,204,21,0.8)]">
-      120 جنيه بس
-    </span>
-    ! 🔥
-  </motion.p>
-</section>
-        
+            ولو إنت طالب هندسة أو علوم حاسب، تقدر تستفيد من الخدمتين
+            مع بعض مقابل{" "}
+            <span className="font-black text-yellow-300 drop-shadow-[0_0_14px_rgba(250,204,21,0.8)]">
+              120 جنيه بس
+            </span>
+            ! 🔥
+          </motion.p>
+        </section>
 
         {/* JOURNEY */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{
+            once: true,
+            amount: 0.2,
+          }}
           transition={{ duration: 0.6 }}
           className="mt-14 border-y border-border bg-card"
         >
@@ -322,7 +408,10 @@ function Landing() {
                 key={label}
                 initial={{ opacity: 0, x: 12 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
+                viewport={{
+                  once: true,
+                  amount: 0.3,
+                }}
                 transition={{
                   duration: 0.4,
                   delay: index * 0.06,
@@ -350,14 +439,19 @@ function Landing() {
 
         {/* HOW */}
         {map.get("how") ? (
-          <RevealSection id="how" className="bg-background">
+          <RevealSection
+            id="how"
+            className="bg-background"
+          >
             <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10">
               <SectionHeading section={map.get("how")!} />
 
               <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
                 {["about", "features", "adaptive", "planning"]
                   .map((key) => map.get(key))
-                  .filter((s): s is SiteSection => Boolean(s))
+                  .filter(
+                    (s): s is SiteSection => Boolean(s),
+                  )
                   .map((s, index) => (
                     <motion.article
                       key={s.section_key}
@@ -403,7 +497,9 @@ function Landing() {
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {["generator", "adaptive", "planning"]
                 .map((key) => map.get(key))
-                .filter((s): s is SiteSection => Boolean(s))
+                .filter(
+                  (s): s is SiteSection => Boolean(s),
+                )
                 .map((s, index) => (
                   <motion.article
                     key={s.section_key}
@@ -435,7 +531,10 @@ function Landing() {
 
         {/* TEACHERS */}
         {teachersVisible && map.get("teachers") ? (
-          <RevealSection id="teachers" className="bg-background">
+          <RevealSection
+            id="teachers"
+            className="bg-background"
+          >
             <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10">
               <SectionHeading section={map.get("teachers")!} />
 
@@ -544,7 +643,9 @@ function Landing() {
 
                     <p className="mt-4 flex items-baseline gap-2">
                       <span className="num font-display text-3xl font-black">
-                        {toArabicSafeNumber(Number(plan.price_egp))}
+                        {toArabicSafeNumber(
+                          Number(plan.price_egp),
+                        )}
                       </span>
 
                       <span className="text-sm text-muted-foreground">
@@ -584,7 +685,9 @@ function Landing() {
                       asChild
                       className="mt-6 w-full rounded-full"
                     >
-                      <Link to="/auth">اشترك الآن</Link>
+                      <Link to="/auth">
+                        اشترك الآن
+                      </Link>
                     </Button>
                   </motion.article>
                 );
@@ -595,14 +698,25 @@ function Landing() {
 
         {/* COMPETITION INFO */}
         {contestVisible && map.get("competition") ? (
-          <RevealSection id="competition" className="bg-background">
+          <RevealSection
+            id="competition"
+            className="bg-background"
+          >
             <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10">
-              <SectionHeading section={map.get("competition")!} />
+              <SectionHeading
+                section={map.get("competition")!}
+              />
 
               {contestRow?.prize_egp ? (
                 <motion.p
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  initial={{
+                    opacity: 0,
+                    scale: 0.95,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    scale: 1,
+                  }}
                   viewport={{
                     once: true,
                     amount: 0.2,
@@ -614,7 +728,9 @@ function Landing() {
                   className="mt-8 font-display text-4xl font-black text-primary"
                 >
                   <span className="num">
-                    {toArabicSafeNumber(Number(contestRow.prize_egp))}
+                    {toArabicSafeNumber(
+                      Number(contestRow.prize_egp),
+                    )}
                   </span>{" "}
                   <span className="text-2xl">
                     {contestRow.currency ?? "EGP"}
@@ -637,8 +753,14 @@ function Landing() {
               {faq.data?.map((item, index) => (
                 <motion.details
                   key={item.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{
+                    opacity: 0,
+                    y: 16,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
                   viewport={{
                     once: true,
                     amount: 0.2,
@@ -681,7 +803,9 @@ function Landing() {
                 size="lg"
                 className="mt-8 rounded-full"
               >
-                <Link to={map.get("cta")?.cta_href ?? "/auth"}>
+                <Link
+                  to={map.get("cta")?.cta_href ?? "/auth"}
+                >
                   {map.get("cta")?.cta_label ?? heroCta}
                 </Link>
               </Button>
@@ -693,11 +817,13 @@ function Landing() {
         {map.get("competition") ? (
           <RevealSection className="mx-auto max-w-7xl px-4 pb-20 sm:px-5 lg:px-10">
             <div className="overflow-hidden rounded-[2rem] border border-border bg-card">
-              {/* Image with title overlay */}
               <div className="relative w-full">
                 {map.get("competition")?.image_url ? (
                   <img
-                    src={map.get("competition")?.image_url ?? undefined}
+                    src={
+                      map.get("competition")?.image_url ??
+                      undefined
+                    }
                     alt={
                       map.get("competition")?.title ??
                       "WISO Competition"
@@ -711,7 +837,6 @@ function Landing() {
                 </h2>
               </div>
 
-              {/* Text + button */}
               <div className="px-6 py-10 text-center sm:px-10">
                 {map.get("competition")?.description ? (
                   <p className="mx-auto mt-4 max-w-xl leading-8 text-muted-foreground">
@@ -726,10 +851,12 @@ function Landing() {
                 >
                   <Link
                     to={
-                      map.get("competition")?.cta_href ?? "/auth"
+                      map.get("competition")?.cta_href ??
+                      "/auth"
                     }
                   >
-                    {map.get("competition")?.cta_label ?? heroCta}
+                    {map.get("competition")?.cta_label ??
+                      heroCta}
                   </Link>
                 </Button>
               </div>
@@ -745,13 +872,111 @@ function Landing() {
             </h2>
 
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              الأقسام بتتضبط من لوحة الإدارة، وأول ما تتفعل هتظهر هنا على طول.
+              الأقسام بتتضبط من لوحة الإدارة، وأول ما تتفعل
+              هتظهر هنا على طول.
             </p>
           </RevealSection>
         ) : null}
       </main>
 
       <Footer />
+
+      {/* نافذة اختيار دعم WISO */}
+      {supportOpen && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setSupportOpen(false)}
+        >
+          <motion.div
+            initial={{
+              opacity: 0,
+              scale: 0.9,
+              y: 20,
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.25,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="support-dialog-title"
+            className="relative w-full max-w-md rounded-[2rem] border border-border bg-card p-7 text-center shadow-2xl"
+          >
+            {/* زر الإغلاق */}
+            <button
+              type="button"
+              onClick={() => setSupportOpen(false)}
+              aria-label="إغلاق"
+              className="absolute left-5 top-5 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="size-5" />
+            </button>
+
+            {/* أيقونة الدعم */}
+            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+              <MessageCircle className="size-8 text-primary" />
+            </div>
+
+            <h2
+              id="support-dialog-title"
+              className="mt-5 font-display text-2xl font-black"
+            >
+              دعم WISO Agent
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              محتاج مساعدة في إرسال طلبك أو عندك أي استفسار؟
+              <br />
+              اختار أحد أرقام الدعم وهنتواصل معاك عبر واتساب ❤️
+            </p>
+
+            {/* أرقام الدعم */}
+            <div className="mt-7 grid gap-3">
+              {/* دعم المنصة 1 */}
+              <Button
+                asChild
+                size="lg"
+                className="h-14 w-full gap-3 rounded-xl text-base font-bold"
+              >
+                <a
+                  href="https://wa.me/201003244623"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="size-5" />
+                  دعم المنصة 1
+                </a>
+              </Button>
+
+              {/* دعم المنصة 2 */}
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-14 w-full gap-3 rounded-xl border-primary/30 text-base font-bold hover:bg-primary/10"
+              >
+                <a
+                  href="https://wa.me/201068622142"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="size-5" />
+                  دعم المنصة 2
+                </a>
+              </Button>
+            </div>
+
+            <p className="mt-5 text-xs text-muted-foreground">
+              فريق WISO موجود لمساعدتك 💚
+            </p>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
