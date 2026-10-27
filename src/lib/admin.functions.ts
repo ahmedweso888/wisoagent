@@ -288,29 +288,60 @@ export const adminUpdateContestSettings = createServerFn({
    REVENUE
    ========================================================= */
 
-export const adminGetRevenueSummary = createServerFn({
-  method: "GET",
-})
+export const adminGetRevenueSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAdmin])
   .handler(async (): Promise<AdminRevenueSummary> => {
     const { supabaseAdmin } =
       await import("@/integrations/supabase/client.server");
 
-    /*
-     * admin_revenue_summary is already designed without auth.uid().
-     * Authorization is handled by requireSupabaseAdmin before this call.
-     */
     const [revenue, pending, used, total] = await Promise.all([
-      supabaseAdmin.from("revenue_entries").select("amount_egp,source"),
-      supabaseAdmin.from("payment_requests").select("amount_egp").eq("status", "pending"),
-      supabaseAdmin.from("center_codes").select("id", { count: "exact", head: true }).not("used_by", "is", null),
-      supabaseAdmin.from("center_codes").select("id", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("revenue_entries")
+        .select("amount_egp,source"),
+
+      supabaseAdmin
+        .from("tool_orders")
+        .select("amount_egp")
+        .eq("status", "pending"),
+
+      supabaseAdmin
+        .from("center_codes")
+        .select("id", { count: "exact", head: true })
+        .not("used_by", "is", null),
+
+      supabaseAdmin
+        .from("center_codes")
+        .select("id", { count: "exact", head: true }),
     ]);
-    const firstError = [revenue, pending, used, total].find((r) => r.error)?.error;
+
+    const firstError = [revenue, pending, used, total]
+      .find((result) => result.error)?.error;
+
     if (firstError) throw firstError;
+
     const by_source: Record<string, number> = {};
-    for (const row of revenue.data ?? []) by_source[row.source] = (by_source[row.source] ?? 0) + Number(row.amount_egp ?? 0);
-    return { total_revenue: (revenue.data ?? []).reduce((n, r) => n + Number(r.amount_egp ?? 0), 0), pending_revenue: (pending.data ?? []).reduce((n, r) => n + Number(r.amount_egp ?? 0), 0), by_source, codes_used: used.count ?? 0, codes_total: total.count ?? 0 };
+
+    for (const row of revenue.data ?? []) {
+      by_source[row.source] =
+        (by_source[row.source] ?? 0) +
+        Number(row.amount_egp ?? 0);
+    }
+
+    return {
+      total_revenue: (revenue.data ?? []).reduce(
+        (sum, row) => sum + Number(row.amount_egp ?? 0),
+        0,
+      ),
+
+      pending_revenue: (pending.data ?? []).reduce(
+        (sum, row) => sum + Number(row.amount_egp ?? 0),
+        0,
+      ),
+
+      by_source,
+      codes_used: used.count ?? 0,
+      codes_total: total.count ?? 0,
+    };
   });
 /* =========================================================
    LEGACY ADMIN ROUTE SEAMS
