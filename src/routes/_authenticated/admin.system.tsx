@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Calculator } from "lucide-react";
+import { Calculator, Plus, Trash2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/common/PageHeader";
@@ -52,11 +52,22 @@ codes_used: number;
 codes_total: number;
 };
 
+type CalculatorGroup = {
+id: number;
+count: string;
+price: string;
+};
+
 const STATUS_LABEL: Record<PlatformStatus, string> = {
 open: "مفتوحة",
 closed: "مغلقة",
 maintenance: "صيانة",
 };
+
+const formatNumber = (value: number) =>
+value.toLocaleString("en-US", {
+maximumFractionDigits: 2,
+});
 
 export const Route = createFileRoute("/_authenticated/admin/system")({
 head: () => ({
@@ -94,19 +105,21 @@ const [prize, setPrize] = useState<string | null>(null);
 const [pdfDraft, setPdfDraft] = useState<Record<string, string>>({});
 
 const [notificationAudience, setNotificationAudience] = useState<
-  "all" | "user" | "stage" | "track"
+"all" | "user" | "stage" | "track"
+
 >("all");
 
- const [notificationUserId, setNotificationUserId] = useState("");
- const [notificationStageId, setNotificationStageId] = useState("");
- const [notificationTrackId, setNotificationTrackId] = useState("");
- const [notificationTitle, setNotificationTitle] = useState("");
- const [notificationBody, setNotificationBody] = useState("");
+const [notificationUserId, setNotificationUserId] = useState("");
+const [notificationStageId, setNotificationStageId] = useState("");
+const [notificationTrackId, setNotificationTrackId] = useState("");
+const [notificationTitle, setNotificationTitle] = useState("");
+const [notificationBody, setNotificationBody] = useState("");
 
-// حالات حاسبة الأكواد — داخل الـ component
 const [calculatorOpen, setCalculatorOpen] = useState(false);
-const [calculatorCount, setCalculatorCount] = useState("");
-const [calculatorPrice, setCalculatorPrice] = useState("");
+const [calculatorGroups, setCalculatorGroups] = useState<CalculatorGroup[]>([
+{ id: 1, count: "", price: "" },
+]);
+const [nextCalculatorGroupId, setNextCalculatorGroupId] = useState(2);
 
 const pdfSettings = useQuery({
 queryKey: ["admin", "pdf-settings"],
@@ -275,26 +288,91 @@ const platform = platformQuery.data;
 const contest = contestQuery.data;
 const usedCodes = revenueQuery.data?.codes_used ?? 0;
 
-const count = Number(calculatorCount);
-const price = Number(calculatorPrice);
+const calculatedGroups = calculatorGroups.map((group) => {
+const countText = group.count.trim();
+const priceText = group.price.trim();
 
-const calculatorValid =
-calculatorCount.trim() !== "" &&
-calculatorPrice.trim() !== "" &&
-Number.isSafeInteger(count) &&
-count > 0 &&
-count <= usedCodes &&
-Number.isFinite(price) &&
-price >= 0;
 
-const calculatorTotal = calculatorValid ? count * price : null;
+const count = countText === "" ? 0 : Number(countText);
+const price = priceText === "" ? 0 : Number(priceText);
+
+const countValid =
+  countText !== "" &&
+  Number.isSafeInteger(count) &&
+  count > 0;
+
+const priceValid =
+  priceText !== "" &&
+  Number.isFinite(price) &&
+  price >= 0;
+
+const valid = countValid && priceValid;
+
+return {
+  ...group,
+  countNumber: count,
+  priceNumber: price,
+  valid,
+  subtotal: valid ? count * price : 0,
+};
+
+
+});
+
+const calculatorCountTotal = calculatedGroups.reduce(
+(sum, group) => sum + (group.valid ? group.countNumber : 0),
+0,
+);
+
+const calculatorGrandTotal = calculatedGroups.reduce(
+(sum, group) => sum + group.subtotal,
+0,
+);
+
+const remainingCodes = usedCodes - calculatorCountTotal;
+
+const updateCalculatorGroup = (
+id: number,
+field: "count" | "price",
+value: string,
+) => {
+setCalculatorGroups((groups) =>
+groups.map((group) =>
+group.id === id ? { ...group, [field]: value } : group,
+),
+);
+};
+
+const addCalculatorGroup = () => {
+setCalculatorGroups((groups) => [
+...groups,
+{
+id: nextCalculatorGroupId,
+count: "",
+price: "",
+},
+]);
+setNextCalculatorGroupId((id) => id + 1);
+};
+
+const removeCalculatorGroup = (id: number) => {
+setCalculatorGroups((groups) => {
+if (groups.length <= 1) return groups;
+return groups.filter((group) => group.id !== id);
+});
+};
+
+const resetCalculator = () => {
+setCalculatorGroups([{ id: nextCalculatorGroupId, count: "", price: "" }]);
+setNextCalculatorGroupId((id) => id + 1);
+};
 
 return ( <main dir="rtl" className="page-shell max-w-5xl"> <PageHeader
      title="إعدادات النظام"
      subtitle="حالة المنصة، وضع الصيانة، المسابقة الشهرية، وملخص الإيرادات الفعلي."
    />
 
-```
+
   {/* حالة المنصة */}
   <section className="surface-panel mt-6 space-y-5 p-5">
     <h2 className="font-display text-base font-semibold">
@@ -328,13 +406,13 @@ return ( <main dir="rtl" className="page-shell max-w-5xl"> <PageHeader
               </SelectTrigger>
 
               <SelectContent>
-                {(
-                  Object.keys(STATUS_LABEL) as PlatformStatus[]
-                ).map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {STATUS_LABEL[status]}
-                  </SelectItem>
-                ))}
+                {(Object.keys(STATUS_LABEL) as PlatformStatus[]).map(
+                  (status) => (
+                    <SelectItem key={status} value={status}>
+                      {STATUS_LABEL[status]}
+                    </SelectItem>
+                  ),
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -683,7 +761,7 @@ return ( <main dir="rtl" className="page-shell max-w-5xl"> <PageHeader
     </Button>
   </section>
 
-  {/* ملخص الإيرادات وحاسبة الأكواد */}
+  {/* ملخص الإيرادات وحاسبة الأكواد متعددة المجموعات */}
   <section className="mt-8 space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 className="font-display text-base font-semibold">
@@ -696,119 +774,217 @@ return ( <main dir="rtl" className="page-shell max-w-5xl"> <PageHeader
         onClick={() => setCalculatorOpen((open) => !open)}
       >
         <Calculator className="ms-2 h-4 w-4" />
-        حاسبة الأكواد المستخدمة
+        {calculatorOpen ? "إخفاء الحاسبة" : "حاسبة الأكواد المستخدمة"}
       </Button>
     </div>
 
     {calculatorOpen && (
-      <div className="surface-panel space-y-4 p-5">
+      <div className="surface-panel space-y-5 p-5">
         <div>
-          <h3 className="font-semibold">حاسبة الأكواد المستخدمة</h3>
+          <h3 className="font-semibold">
+            حاسبة توزيع الأكواد على المجموعات
+          </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            أدخل عدد الأكواد وسعر بيع الكود لحساب الإجمالي.
+            أضف مجموعة لكل سعر بيع مختلف، وحدد عدد الأكواد وسعر الكود
+            لحساب قيمة كل مجموعة والإجمالي.
           </p>
         </div>
 
-        <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">
-            إجمالي الأكواد المستخدمة فعليًا
-          </p>
-
-          <p className="mt-1 text-2xl font-bold">
-            {revenueQuery.isPending
-              ? "جارٍ التحميل..."
-              : revenueQuery.isError
-                ? "تعذّر التحميل"
-                : usedCodes.toLocaleString("ar-EG")}
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="calculator-count">
-              عدد الأكواد المراد حسابها
-            </Label>
-
-            <Input
-              id="calculator-count"
-              type="number"
-              min="1"
-              max={usedCodes}
-              step="1"
-              inputMode="numeric"
-              placeholder="مثال: 500"
-              value={calculatorCount}
-              onChange={(event) =>
-                setCalculatorCount(event.target.value)
-              }
-            />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border p-4">
+            <p className="text-xs text-muted-foreground">
+              إجمالي الأكواد المستخدمة فعليًا
+            </p>
+            <p className="mt-2 text-2xl font-bold">
+              {revenueQuery.isPending
+                ? "جارٍ التحميل..."
+                : revenueQuery.isError
+                  ? "تعذّر التحميل"
+                  : formatNumber(usedCodes)}
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="calculator-price">
-              سعر بيع الكود الواحد (جنيه)
-            </Label>
+          <div className="rounded-lg border p-4">
+            <p className="text-xs text-muted-foreground">
+              الأكواد الموجودة في المجموعات
+            </p>
+            <p className="mt-2 text-2xl font-bold">
+              {formatNumber(calculatorCountTotal)}
+            </p>
+          </div>
 
-            <Input
-              id="calculator-price"
-              type="number"
-              min="0"
-              step="0.01"
-              inputMode="decimal"
-              placeholder="مثال: 50"
-              value={calculatorPrice}
-              onChange={(event) =>
-                setCalculatorPrice(event.target.value)
-              }
-            />
+          <div className="rounded-lg border p-4">
+            <p className="text-xs text-muted-foreground">
+              الأكواد المتبقية دون حساب
+            </p>
+            <p
+              className={`mt-2 text-2xl font-bold ${
+                remainingCodes < 0 ? "text-destructive" : ""
+              }`}
+            >
+              {formatNumber(remainingCodes)}
+            </p>
           </div>
         </div>
 
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+        <div className="space-y-4">
+          {calculatedGroups.map((group, index) => (
+            <div
+              key={group.id}
+              className="rounded-xl border p-4 sm:p-5"
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h4 className="font-semibold">
+                  المجموعة {index + 1}
+                </h4>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={calculatorGroups.length <= 1}
+                  onClick={() => removeCalculatorGroup(group.id)}
+                  aria-label={`حذف المجموعة ${index + 1}`}
+                >
+                  <Trash2 className="ms-2 h-4 w-4" />
+                  حذف المجموعة
+                </Button>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor={`calculator-count-${group.id}`}>
+                    عدد الأكواد
+                  </Label>
+                  <Input
+                    id={`calculator-count-${group.id}`}
+                    type="number"
+                    min="1"
+                    step="1"
+                    inputMode="numeric"
+                    placeholder="مثال: 200"
+                    value={group.count}
+                    onChange={(event) =>
+                      updateCalculatorGroup(
+                        group.id,
+                        "count",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`calculator-price-${group.id}`}>
+                    سعر الكود الواحد (جنيه)
+                  </Label>
+                  <Input
+                    id={`calculator-price-${group.id}`}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="مثال: 50"
+                    value={group.price}
+                    onChange={(event) =>
+                      updateCalculatorGroup(
+                        group.id,
+                        "price",
+                        event.target.value,
+                      )
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 p-3">
+                <span className="text-sm text-muted-foreground">
+                  إجمالي قيمة المجموعة
+                </span>
+                <span className="text-lg font-bold">
+                  {group.valid
+                    ? `${formatNumber(group.subtotal)} ج.م`
+                    : "—"}
+                </span>
+              </div>
+
+              {group.count.trim() !== "" &&
+                (!Number.isSafeInteger(group.countNumber) ||
+                  group.countNumber <= 0) && (
+                  <p className="mt-2 text-sm text-destructive">
+                    أدخل عدد أكواد صحيحًا أكبر من صفر.
+                  </p>
+                )}
+
+              {group.price.trim() !== "" &&
+                (!Number.isFinite(group.priceNumber) ||
+                  group.priceNumber < 0) && (
+                  <p className="mt-2 text-sm text-destructive">
+                    أدخل سعرًا صحيحًا لا يقل عن صفر.
+                  </p>
+                )}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addCalculatorGroup}
+          >
+            <Plus className="ms-2 h-4 w-4" />
+            إضافة مجموعة أخرى
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={resetCalculator}
+          >
+            <RotateCcw className="ms-2 h-4 w-4" />
+            مسح الحساب والبدء من جديد
+          </Button>
+        </div>
+
+        {remainingCodes < 0 && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+            مجموع الأكواد في المجموعات أكبر من إجمالي الأكواد المستخدمة
+            فعليًا بمقدار {formatNumber(Math.abs(remainingCodes))} كود.
+            راجع الأعداد المدخلة.
+          </div>
+        )}
+
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
           <p className="text-sm text-muted-foreground">
-            إجمالي قيمة الأكواد
+            إجمالي قيمة جميع المجموعات
           </p>
 
           <p className="mt-2 text-3xl font-bold text-primary">
-            {calculatorTotal !== null
-              ? calculatorTotal.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })
-              : "—"}{" "}
+            {formatNumber(calculatorGrandTotal)}{" "}
             <span className="text-base font-medium">ج.م</span>
           </p>
 
-          {calculatorCount.trim() !== "" &&
-            Number.isSafeInteger(count) &&
-            count > usedCodes && (
-              <p className="mt-2 text-sm text-destructive">
-                العدد أكبر من إجمالي الأكواد المستخدمة.
-              </p>
-            )}
-
-          {calculatorTotal !== null && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              {count.toLocaleString("en-US")} كود ×{" "}
-              {price.toLocaleString("en-US")} جنيه
+          <div className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+            <p>
+              عدد الأكواد المحسوبة:{" "}
+              <span className="font-semibold text-foreground">
+                {formatNumber(calculatorCountTotal)}
+              </span>
             </p>
-          )}
+            <p>
+              عدد المجموعات:{" "}
+              <span className="font-semibold text-foreground">
+                {calculatorGroups.length}
+              </span>
+            </p>
+          </div>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setCalculatorCount("");
-            setCalculatorPrice("");
-          }}
-        >
-          مسح الحساب
-        </Button>
-
         <p className="text-xs text-muted-foreground">
-          الحاسبة للقراءة والحساب فقط؛ لا تخصم الأكواد ولا تغيّر
-          بياناتها ولا تسجّل إيرادات جديدة.
+          الحاسبة للحساب فقط؛ لا تخصم الأكواد، ولا تعدّل بيانات الداتا بيز،
+          ولا تسجّل إيرادات جديدة. إجمالي الأكواد المستخدمة يُحمّل من
+          بيانات النظام الفعلية.
         </p>
       </div>
     )}
