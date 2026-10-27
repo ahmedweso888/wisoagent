@@ -64,13 +64,19 @@ export const Route = createFileRoute("/_authenticated")({
       throw profileError;
     }
 
-    if (
-      location.pathname !== "/onboarding" &&
-      (!profile?.onboarded_at || !profile.school_year)
-    ) {
-      throw redirect({ to: "/onboarding" });
-    }
+    const onboardingComplete = Boolean(
+  profile?.onboarded_at && profile?.school_year,
+);
 
+// الحساب الجديد أو غير المكتمل يحتاج إلى إنهاء التسجيل.
+if (!onboardingComplete && location.pathname !== "/onboarding") {
+  throw redirect({ to: "/onboarding" });
+}
+
+// الطالب الذي أكمل التسجيل لا يحتاج إلى رؤية صفحة Onboarding مرة أخرى.
+if (onboardingComplete && location.pathname === "/onboarding") {
+  throw redirect({ to: "/dashboard" });
+}
     return {
       user: data.user,
       isAdmin: false,
