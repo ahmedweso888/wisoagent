@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Calculator } from "lucide-react";
 
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/common/StatCard";
@@ -56,6 +57,9 @@ const STATUS_LABEL: Record<PlatformStatus, string> = {
   closed: "مغلقة",
   maintenance: "صيانة",
 };
+const [calculatorOpen, setCalculatorOpen] = useState(false);
+const [calculatorCount, setCalculatorCount] = useState("");
+const [calculatorPrice, setCalculatorPrice] = useState("");
 
 export const Route = createFileRoute("/_authenticated/admin/system")({
   head: () => ({
@@ -650,56 +654,189 @@ function AdminSystemPage() {
         <Button disabled={sendNotification.isPending || !notificationTitle.trim() || !notificationBody.trim()} onClick={() => sendNotification.mutate()}>إرسال الإشعار</Button>
       </section>
 
-      <section className="mt-8">
-        <h2 className="font-display text-base font-semibold">
-          ملخص الإيرادات
-        </h2>
+      
+  <section className="mt-8 space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h2 className="font-display text-base font-semibold">
+        ملخص الإيرادات
+      </h2>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {revenueQuery.isPending ? (
-            Array.from({ length: 4 }).map(
-              (_, index) => (
-                <Skeleton
-                  key={index}
-                  className="h-28 w-full"
-                />
-              ),
-            )
-          ) : revenueQuery.isError ? (
-            <p className="text-sm text-destructive">
-              تعذّر تحميل الإيرادات.
-            </p>
-          ) : (
-            <>
-              <StatCard
-                label="إجمالي الإيرادات"
-                value={`${revenueQuery.data?.total_revenue ?? 0} ج.م`}
-                tone="success"
-              />
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setCalculatorOpen((open) => !open)}
+      >
+        <Calculator className="ms-2 h-4 w-4" />
+        حاسبة الأكواد المستخدمة
+      </Button>
+    </div>
 
-              <StatCard
-                label="إيرادات معلّقة"
-                value={`${revenueQuery.data?.pending_revenue ?? 0} ج.م`}
-                tone="accent"
-              />
-
-              <StatCard
-                label="أكواد مستخدمة"
-                value={
-                  revenueQuery.data?.codes_used ?? 0
-                }
-              />
-
-              <StatCard
-                label="إجمالي الأكواد"
-                value={
-                  revenueQuery.data?.codes_total ?? 0
-                }
-              />
-            </>
-          )}
+    {calculatorOpen && (
+      <div className="surface-panel space-y-4 p-5">
+        <div>
+          <h3 className="font-semibold">حاسبة الأكواد المستخدمة</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            احسب قيمة عدد محدد من الأكواد المستخدمة حسب سعر البيع.
+          </p>
         </div>
-      </section>
+
+        <div className="rounded-lg border p-4">
+          <p className="text-sm text-muted-foreground">
+            إجمالي الأكواد المستخدمة فعليًا
+          </p>
+
+          <p className="mt-1 text-2xl font-bold">
+            {revenueQuery.isPending
+              ? "جارٍ التحميل..."
+              : revenueQuery.isError
+                ? "تعذّر التحميل"
+                : (revenueQuery.data?.codes_used ?? 0).toLocaleString("ar-EG")}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="calculator-count">
+              عدد الأكواد المراد حسابها
+            </Label>
+
+            <Input
+              id="calculator-count"
+              type="number"
+              min="1"
+              max={revenueQuery.data?.codes_used ?? 0}
+              step="1"
+              inputMode="numeric"
+              placeholder="مثال: 500"
+              value={calculatorCount}
+              onChange={(event) =>
+                setCalculatorCount(event.target.value)
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="calculator-price">
+              سعر بيع الكود الواحد (جنيه)
+            </Label>
+
+            <Input
+              id="calculator-price"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              placeholder="مثال: 50"
+              value={calculatorPrice}
+              onChange={(event) =>
+                setCalculatorPrice(event.target.value)
+              }
+            />
+          </div>
+        </div>
+
+        {(() => {
+          const count = Number(calculatorCount);
+          const price = Number(calculatorPrice);
+          const available = revenueQuery.data?.codes_used ?? 0;
+
+          const valid =
+            calculatorCount.trim() !== "" &&
+            calculatorPrice.trim() !== "" &&
+            Number.isSafeInteger(count) &&
+            count > 0 &&
+            count <= available &&
+            Number.isFinite(price) &&
+            price >= 0;
+
+          return (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <p className="text-sm text-muted-foreground">
+                إجمالي قيمة الأكواد
+              </p>
+
+              <p className="mt-2 text-3xl font-bold text-primary">
+                {valid
+                  ? (count * price).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : "—"}{" "}
+                <span className="text-base font-medium">ج.م</span>
+              </p>
+
+              {calculatorCount.trim() !== "" &&
+                Number.isSafeInteger(count) &&
+                count > available && (
+                  <p className="mt-2 text-sm text-destructive">
+                    العدد أكبر من إجمالي الأكواد المستخدمة.
+                  </p>
+                )}
+
+              {valid && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {count.toLocaleString("en-US")} كود ×{" "}
+                  {price.toLocaleString("en-US")} جنيه
+                </p>
+              )}
+            </div>
+          );
+        })()}
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setCalculatorCount("");
+            setCalculatorPrice("");
+          }}
+        >
+          مسح الحساب
+        </Button>
+
+        <p className="text-xs text-muted-foreground">
+          الحاسبة للقراءة والحساب فقط، ولا تخصم الأكواد أو تغيّر بياناتها.
+        </p>
+      </div>
+    )}
+
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {revenueQuery.isPending ? (
+        Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="h-28 w-full" />
+        ))
+      ) : revenueQuery.isError ? (
+        <p className="text-sm text-destructive">
+          تعذّر تحميل الإيرادات.
+        </p>
+      ) : (
+        <>
+          <StatCard
+            label="إجمالي الإيرادات"
+            value={`${revenueQuery.data?.total_revenue ?? 0} ج.م`}
+            tone="success"
+          />
+
+          <StatCard
+            label="إيرادات معلّقة"
+            value={`${revenueQuery.data?.pending_revenue ?? 0} ج.م`}
+            tone="accent"
+          />
+
+          <StatCard
+            label="أكواد مستخدمة"
+            value={revenueQuery.data?.codes_used ?? 0}
+          />
+
+          <StatCard
+            label="إجمالي الأكواد"
+            value={revenueQuery.data?.codes_total ?? 0}
+          />
+        </>
+      )}
+    </div>
+  </section>
+
     </main>
   );
 }
