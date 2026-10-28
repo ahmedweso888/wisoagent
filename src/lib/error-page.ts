@@ -1,30 +1,178 @@
 export function renderErrorPage(): string {
   return `<!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="utf-8" />
-    <title>This page didn't load</title>
+    <title>404 — الصفحة غير موجودة | WISO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
     <style>
-      body { font: 15px/1.5 system-ui, -apple-system, sans-serif; background: #fafafa; color: #111; display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 1.5rem; }
-      .card { max-width: 28rem; width: 100%; text-align: center; padding: 2rem; }
-      h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
-      p { color: #4b5563; margin: 0 0 1.5rem; }
-      .actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-      a, button { padding: 0.5rem 1rem; border-radius: 0.375rem; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-      .primary { background: #111; color: #fff; }
-      .secondary { background: #fff; color: #111; border-color: #d1d5db; }
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at 50% 20%, rgba(66, 87, 34, 0.08), transparent 35%),
+          #f7f8f4;
+        color: #1d2417;
+        font-family:
+          "IBM Plex Sans Arabic",
+          "Cairo",
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      .card {
+        width: min(100%, 620px);
+        padding: 48px 32px;
+        text-align: center;
+      }
+
+      .logo {
+        width: 58px;
+        height: 58px;
+        margin: 0 auto 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 18px;
+        background: #425722;
+        color: #fff;
+        font-size: 30px;
+        font-weight: 800;
+        box-shadow: 0 14px 35px rgba(66, 87, 34, 0.18);
+      }
+
+      .code {
+        margin: 0;
+        font-size: clamp(76px, 16vw, 130px);
+        line-height: 0.9;
+        font-weight: 800;
+        letter-spacing: -5px;
+        color: #425722;
+      }
+
+      h1 {
+        margin: 28px 0 10px;
+        font-size: clamp(22px, 4vw, 30px);
+        line-height: 1.4;
+        font-weight: 700;
+      }
+
+      p {
+        max-width: 460px;
+        margin: 0 auto;
+        color: #68705f;
+        font-size: 16px;
+        line-height: 1.9;
+      }
+
+      .actions {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      a,
+      button {
+        min-height: 46px;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          background 0.2s ease;
+      }
+
+      a:hover,
+      button:hover {
+        transform: translateY(-2px);
+      }
+
+      .primary {
+        border: 1px solid #425722;
+        background: #425722;
+        color: #fff;
+        box-shadow: 0 8px 20px rgba(66, 87, 34, 0.16);
+      }
+
+      .primary:hover {
+        background: #35481c;
+      }
+
+      .secondary {
+        border: 1px solid #d8ddd0;
+        background: #fff;
+        color: #425722;
+      }
+
+      .secondary:hover {
+        background: #f1f3ed;
+      }
+
+      .footer {
+        margin-top: 42px;
+        color: #9aa092;
+        font-size: 12px;
+      }
+
+      @media (max-width: 480px) {
+        .card {
+          padding: 36px 18px;
+        }
+
+        .code {
+          letter-spacing: -3px;
+        }
+
+        .actions {
+          flex-direction: column;
+        }
+
+        a,
+        button {
+          width: 100%;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="card">
-      <h1>This page didn't load</h1>
-      <p>Something went wrong on our end. You can try refreshing or head back home.</p>
+    <main class="card">
+      <div class="logo">W</div>
+      <div class="code">404</div>
+      <h1>الصفحة دي مش موجودة</h1>
+      <p>
+        يبدو إنك وصلت لمكان مش موجود في رحلة WISO.
+        متقلقش، طريقك لسه موجود — ارجع للصفحة الرئيسية وكمل رحلتك نحو التفوق.
+      </p>
       <div class="actions">
-        <button class="primary" onclick="location.reload()">Try again</button>
-        <a class="secondary" href="/">Go home</a>
+        <a class="primary" href="/">العودة للرئيسية</a>
+        <button class="secondary" onclick="history.back()">العودة للصفحة السابقة</button>
       </div>
-    </div>
+      <div class="footer">
+        WISO — وكيلك الذكي في رحلتك نحو التفوق
+      </div>
+    </main>
   </body>
 </html>`;
 }
