@@ -39,6 +39,164 @@ export const Route = createFileRoute("/_authenticated/tools")({
   component: ToolsPage,
 });
 
+/* =========================================
+   SUCCESS ANIMATION COMPONENT
+========================================= */
+
+function SubmissionSuccessNotice() {
+  return (
+    <div
+      id="tool-submission-success"
+      dir="rtl"
+      className="relative mx-auto mt-5 max-w-2xl overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.04] p-6 text-center shadow-lg shadow-emerald-500/5 sm:p-8"
+    >
+      <style>{`
+        @keyframes drawCircle {
+          from {
+            stroke-dashoffset: 283;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+
+        @keyframes drawCheck {
+          from {
+            stroke-dashoffset: 55;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+
+        @keyframes successPop {
+          0% {
+            transform: scale(0.7);
+            opacity: 0;
+          }
+          70% {
+            transform: scale(1.08);
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+
+        @keyframes successGlow {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(16,185,129,0);
+          }
+          50% {
+            box-shadow: 0 0 25px 2px rgba(16,185,129,0.12);
+          }
+        }
+
+        .success-icon {
+          animation: successPop 0.5s ease-out forwards;
+        }
+
+        .success-circle {
+          stroke-dasharray: 283;
+          stroke-dashoffset: 283;
+          animation: drawCircle 1.1s ease-out 0.2s forwards;
+        }
+
+        .success-check {
+          stroke-dasharray: 55;
+          stroke-dashoffset: 55;
+          animation: drawCheck 0.55s ease-out 1.35s forwards;
+        }
+
+        .success-card {
+          animation: successGlow 3s ease-in-out infinite 2s;
+        }
+      `}</style>
+
+      <div className="success-card rounded-xl">
+        {/* دائرة النجاح وعلامة الصح */}
+
+        <div className="success-icon mx-auto mb-5 flex size-24 items-center justify-center">
+          <svg
+            viewBox="0 0 100 100"
+            className="size-full overflow-visible"
+            fill="none"
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              stroke="currentColor"
+              strokeWidth="3.5"
+              className="success-circle text-emerald-500"
+              strokeLinecap="round"
+              transform="rotate(-90 50 50)"
+            />
+
+            <path
+              d="M27 51 L43 66 L74 34"
+              stroke="currentColor"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="success-check text-emerald-500"
+            />
+          </svg>
+        </div>
+
+        <h2 className="text-xl font-extrabold text-emerald-600 sm:text-2xl">
+          تم استلام طلبك بنجاح
+        </h2>
+
+        <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-muted-foreground sm:text-base">
+          تم إرسال طلبك إلى الإدارة بنجاح، وهو الآن في انتظار المراجعة
+          والاعتماد.
+        </p>
+
+        {/* تفاصيل المراجعة والتنفيذ */}
+
+        <div className="mt-6 space-y-4 text-right">
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <p className="font-bold text-amber-600">
+              مراجعة الطلب
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              في حالة وجود ضغط على النظام، قد تستغرق مراجعة طلبك مدة
+              تصل إلى 8 ساعات كحد أقصى.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <p className="font-bold text-emerald-600">
+              تنفيذ الطلب
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              بمجرد قبول طلبك من الإدارة، يتم تنفيذ الحل على حسابك
+              خلال 5 دقائق كحد أقصى.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-border/60 pt-4">
+          <p className="text-xs font-semibold text-muted-foreground">
+            WISO AGENT
+          </p>
+
+          <p className="mt-1 text-xs text-muted-foreground">
+            شكرًا لثقتك بنا.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================
+   MAIN PAGE
+========================================= */
+
 function ToolsPage() {
   const qc = useQueryClient();
 
@@ -81,9 +239,11 @@ function ToolsPage() {
   });
 
   const [code, setCode] = useState("");
+
   const [activeTab, setActiveTab] = useState<"purchase" | "code">(
     "purchase",
   );
+
   const [accountId, setAccountId] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
 
@@ -101,9 +261,12 @@ function ToolsPage() {
   const [senderNumber, setSenderNumber] = useState("");
   const [proof, setProof] = useState<File | null>(null);
 
-  // نافذتا التأكيد قبل إرسال طلب الدفع.
+  // نوافذ التأكيد.
   const [showFirstConfirmation, setShowFirstConfirmation] = useState(false);
   const [showSecondConfirmation, setShowSecondConfirmation] = useState(false);
+
+  // رسالة نجاح إرسال الطلب.
+  const [showSubmissionSuccess, setShowSubmissionSuccess] = useState(false);
 
   const accessSet = useMemo(
     () =>
@@ -119,8 +282,9 @@ function ToolsPage() {
     (item) => item.status === "pending",
   );
 
-  // اختيار المنتج وفتح فورم الدفع مباشرة.
+  // اختيار المنتج وفتح فورم الدفع.
   const openPurchaseForm = (productKey: ToolProductKey) => {
+    setShowSubmissionSuccess(false);
     setSelectedProduct(productKey);
     setActiveTab("purchase");
 
@@ -167,6 +331,10 @@ function ToolsPage() {
     setShowSecondConfirmation(false);
     pay.mutate();
   };
+
+  /* =========================================
+     REDEEM MUTATION
+  ========================================= */
 
   const redeem = useMutation({
     mutationFn: () => {
@@ -228,6 +396,10 @@ function ToolsPage() {
                 : error.message,
       ),
   });
+
+  /* =========================================
+     PAYMENT MUTATION
+  ========================================= */
 
   const pay = useMutation({
     mutationFn: async () => {
@@ -300,10 +472,14 @@ function ToolsPage() {
       setAccountId("");
       setAccountPassword("");
       setSelectedProduct(null);
+
       setShowFirstConfirmation(false);
       setShowSecondConfirmation(false);
 
-      toast.success("تم إرسال طلب الدفع للإدارة.");
+      // إظهار رسالة النجاح.
+      setShowSubmissionSuccess(true);
+
+      toast.success("تم إرسال طلب الدفع بنجاح.");
 
       await Promise.all([
         qc.invalidateQueries({
@@ -316,6 +492,14 @@ function ToolsPage() {
           queryKey: ["wiso-tools-attempt-status"],
         }),
       ]);
+
+      // الانتقال تلقائيًا لمربع النجاح.
+      setTimeout(() => {
+        document.getElementById("tool-submission-success")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 300);
     },
 
     onError: (error: Error) => toast.error(error.message),
@@ -339,7 +523,12 @@ function ToolsPage() {
         subtitle="وكلاء مستقلة عن باقات الأسئلة، مرتبطة بحساب WISO الخاص بك. لديك محاولة واحدة لإدخال بياناتك في كل اشتراك. في حالة حدوث خطأ أثناء إرسال البيانات، تواصل مع الدعم وأرسل الـ ID والباسوورد الصحيحين، مع مراعاة الحروف الكبيرة والصغيرة."
       />
 
+      {/* رسالة نجاح إرسال الطلب */}
+
+      {showSubmissionSuccess && <SubmissionSuccessNotice />}
+
       {/* رقم الدفع */}
+
       <div className="mt-4 text-center">
         <p className="mb-2 text-sm text-muted-foreground">
           رقم الفودافون كاش
@@ -355,9 +544,9 @@ function ToolsPage() {
       </div>
 
       {/* كروت الأدوات */}
+
       <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => {
-          // لا تعتبر الأداة متاحة إلا بوجود صلاحية ومحاولة غير مستهلكة.
           const available =
             product.tools.every((tool) => accessSet.has(tool)) &&
             product.tools.every(
@@ -446,6 +635,7 @@ function ToolsPage() {
       </section>
 
       {/* التبويبات */}
+
       <div
         className="mt-6 flex flex-wrap gap-2"
         role="tablist"
@@ -473,6 +663,7 @@ function ToolsPage() {
       </div>
 
       {/* فورم الدفع */}
+
       {activeTab === "purchase" ? (
         <section id="tool-payment" className="mt-4 scroll-mt-24">
           <Card>
@@ -497,6 +688,7 @@ function ToolsPage() {
               ) : null}
 
               {/* اختيار الأداة */}
+
               <div className="space-y-3">
                 <p className="text-sm font-bold">
                   ١. اختر الأداة المطلوبة
@@ -547,6 +739,7 @@ function ToolsPage() {
               </div>
 
               {/* بيانات الحساب */}
+
               <div className="space-y-3">
                 <p className="text-sm font-bold">
                   بيانات حسابك على المنصة اللي عايز تحلها (كيريو،
@@ -594,6 +787,7 @@ function ToolsPage() {
               </div>
 
               {/* طرق الدفع */}
+
               <div className="space-y-3">
                 <p className="text-sm font-bold">
                   ٣. اختر طريقة الدفع
@@ -663,6 +857,7 @@ function ToolsPage() {
               </div>
 
               {/* رقم التحويل */}
+
               <div className="space-y-2">
                 <Label htmlFor="tool-sender">
                   ٤. الرقم الذي تم التحويل منه
@@ -683,6 +878,7 @@ function ToolsPage() {
               </div>
 
               {/* إثبات الدفع */}
+
               <div className="space-y-2">
                 <Label htmlFor="tool-proof">
                   ٥. صورة إثبات الدفع
@@ -709,7 +905,8 @@ function ToolsPage() {
                 ) : null}
               </div>
 
-              {/* فتح التأكيد الأول بدل الإرسال المباشر */}
+              {/* فتح التأكيد الأول */}
+
               <Button
                 className="w-full"
                 disabled={
@@ -731,6 +928,7 @@ function ToolsPage() {
         </section>
       ) : (
         /* فورم تفعيل الكود */
+
         <section className="mt-4 max-w-3xl space-y-4">
           <Card>
             <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
@@ -802,6 +1000,7 @@ function ToolsPage() {
       )}
 
       {/* طلبات الأدوات */}
+
       <section className="mt-6">
         <Card>
           <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
@@ -854,6 +1053,7 @@ function ToolsPage() {
       </section>
 
       {/* نافذة التأكيد الأولى */}
+
       {showFirstConfirmation ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm"
@@ -984,7 +1184,8 @@ function ToolsPage() {
         </div>
       ) : null}
 
-      {/* نافذة التأكيد الثانية - الإرسال النهائي */}
+      {/* نافذة التأكيد الثانية */}
+
       {showSecondConfirmation ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-sm"
