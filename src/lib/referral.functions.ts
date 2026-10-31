@@ -59,10 +59,12 @@ export const captureReferralAttribution = createServerFn({ method: "POST" })
 export const getMyReferralStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userSupabase = (
+  await import("@/integrations/supabase/user-client.server")
+).getUserSupabase();
 
-    const { data: link, error: linkError } = await supabaseAdmin
-      .rpc("get_or_create_referral_link", { _user_id: context.userId });
+const { data: link, error: linkError } = await userSupabase
+  .rpc("get_or_create_referral_link", { _user_id: context.userId });
     if (linkError) throw linkError;
 
     const referralLink = link as {
@@ -72,19 +74,19 @@ export const getMyReferralStats = createServerFn({ method: "GET" })
     };
 
     const [visits, attributions, rewards, wallet] = await Promise.all([
-      supabaseAdmin
+      userSupabase
         .from("referral_visits")
         .select("id", { count: "exact", head: true })
         .eq("referral_link_id", referralLink.id),
-      supabaseAdmin
+      userSupabase
         .from("referral_attributions")
         .select("id", { count: "exact", head: true })
         .eq("referrer_user_id", context.userId),
-      supabaseAdmin
+      userSupabase
         .from("referral_rewards")
         .select("reward_amount_egp")
         .eq("referrer_user_id", context.userId),
-      supabaseAdmin
+      userSupabase
         .from("student_wallets")
         .select("cash_balance_egp")
         .eq("user_id", context.userId)
