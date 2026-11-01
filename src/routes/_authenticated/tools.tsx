@@ -5,6 +5,8 @@ import {
   BadgeCheck,
   Bot,
   CreditCard,
+  Eye,
+  EyeOff,
   KeyRound,
   LockKeyhole,
   ShieldCheck,
@@ -246,6 +248,7 @@ function ToolsPage() {
 
   const [accountId, setAccountId] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
+  const [showAccountPassword, setShowAccountPassword] = useState(false);
 
   const [redeemedToolKeys, setRedeemedToolKeys] = useState<
     Array<"financial_literacy" | "qureo">
@@ -770,18 +773,40 @@ function ToolsPage() {
                       Password
                     </Label>
 
-                    <Input
-                      id="purchase-account-password"
-                      type="password"
-                      autoComplete="current-password"
-                      value={accountPassword}
-                      onChange={(event) =>
-                        setAccountPassword(event.target.value)
-                      }
-                      maxLength={500}
-                      disabled={pay.isPending || Boolean(pending)}
-                      placeholder="أدخل Password"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="purchase-account-password"
+                        type={showAccountPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        value={accountPassword}
+                        onChange={(event) =>
+                          setAccountPassword(event.target.value)
+                        }
+                        maxLength={500}
+                        disabled={pay.isPending || Boolean(pending)}
+                        placeholder="أدخل Password"
+                        className="pl-11"
+                        dir="ltr"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowAccountPassword((current) => !current)
+                        }
+                        disabled={pay.isPending || Boolean(pending)}
+                        aria-label={
+                          showAccountPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
+                        }
+                        aria-pressed={showAccountPassword}
+                        className="absolute left-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {showAccountPassword ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1004,7 +1029,7 @@ function ToolsPage() {
       <section className="mt-6">
         <Card>
           <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
-            <CardTitle className="text-lg">طلبات الأدوات</CardTitle>
+            <CardTitle className="text-lg">طلبات الأدوات (لو عملت اكتر من 10 طلبات خد اسكرين شوت وابعت لفريق الدعم واكسب 100ج كاش باك)</CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-2 p-4 pt-0 sm:p-6 sm:pt-0">
@@ -1124,8 +1149,11 @@ function ToolsPage() {
                     Password
                   </p>
 
-                  <p className="mt-1 text-sm font-semibold">
-                    •••••••• (تم إدخاله)
+                  <p
+                    dir="ltr"
+                    className="mt-1 break-all text-left text-sm font-semibold"
+                  >
+                    {accountPassword}
                   </p>
                 </div>
               </div>
