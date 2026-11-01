@@ -18,17 +18,23 @@ export const recordReferralVisit = createServerFn({ method: "POST" })
     const code = validCode(data.code);
     if (!data.visitorKey || data.visitorKey.length > 200) return { recorded: false };
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: link, error: linkError } = await supabaseAdmin
+    const userSupabase = (
+      await import("@/integrations/supabase/user-client.server")
+    ).getUserSupabase();
+    const { data: link, error: linkError } = await userSupabase
       .from("referral_links")
       .select("id")
       .eq("code", code)
       .maybeSingle();
-    if (linkError) throw linkError;
+
+    if (linkError) {
+      console.error("[Referral] Failed to find referral link:", linkError);
+      throw linkError;
+    }
     if (!link) return { recorded: false };
 
     const visitorHash = await hashVisitorKey(data.visitorKey);
-    const { error } = await supabaseAdmin
+    const { error } = await userSupabase
       .from("referral_visits")
       .upsert(
         {

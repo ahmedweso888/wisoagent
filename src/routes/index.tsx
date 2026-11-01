@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, type MotionProps } from "framer-motion";
 import {
   ArrowLeft,
@@ -144,6 +144,81 @@ function RevealSection({
   );
 }
 
+
+/**
+ * عداد عدد الطلاب:
+ * يبدأ من 6,643، ثم يزيد 3 كل 30 دقيقة من وقت البداية الثابت.
+ * العد متزامن عند جميع الزوار لأنه يعتمد على الوقت وليس على حالة المتصفح.
+ */
+function StudentsCounter() {
+  const BASE_COUNT = 6643;
+  const START_TIME = new Date("2026-11-01T14:20:00+02:00").getTime();
+  const INTERVAL_MS = 30 * 60 * 1000;
+
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let animationFrame = 0;
+    let intervalId = 0;
+
+    const getTargetCount = () => {
+      const elapsed = Math.max(0, Date.now() - START_TIME);
+      return BASE_COUNT + Math.floor(elapsed / INTERVAL_MS) * 3;
+    };
+
+    const target = getTargetCount();
+    const animationStart = performance.now();
+    const animationDuration = 1800;
+
+    const animateCount = (now: number) => {
+      const progress = Math.min(
+        1,
+        (now - animationStart) / animationDuration,
+      );
+      const easedProgress = 1 - Math.pow(1 - progress, 4);
+
+      setCount(Math.floor(target * easedProgress));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animateCount);
+      } else {
+        setCount(target);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animateCount);
+
+    // يراجع الوقت دوريًا، ويضيف 3 عند اكتمال كل نصف ساعة.
+    intervalId = window.setInterval(() => {
+      setCount(getTargetCount());
+    }, 10_000);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-[var(--hero-border)] bg-[var(--hero-surface)] px-4 py-2 text-center">
+      <span className="text-[11px] font-bold leading-5 text-[var(--hero-muted)] sm:text-xs">
+        عدد طلابنا اللي اشتركوا في خدماتنا
+      </span>
+      <motion.span
+        key={count}
+        initial={{ opacity: 0.75, y: 3 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="num text-xl font-black leading-7 text-[var(--hero-foreground)] sm:text-2xl"
+        dir="ltr"
+        aria-live="polite"
+      >
+        {count.toLocaleString("en-US")}+
+      </motion.span>
+    </div>
+  );
+}
+
 function Landing() {
   const { map, isLoading } = useSectionMap();
   const teachers = useTeachers();
@@ -260,17 +335,21 @@ function Landing() {
                   }}
                   className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start"
                 >
-                  {/* تسجيل الدخول */}
-                  <Button
-                    asChild
-                    size="lg"
-                    className="rounded-full"
-                  >
-                    <Link to={hero?.cta_href ?? "/auth"}>
-                      {heroCta}
-                      <ArrowLeft />
-                    </Link>
-                  </Button>
+                  {/* تسجيل الدخول والعداد أسفله مباشرة */}
+                  <div className="flex flex-col items-center gap-2">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="rounded-full"
+                    >
+                      <Link to={hero?.cta_href ?? "/auth"}>
+                        {heroCta}
+                        <ArrowLeft />
+                      </Link>
+                    </Button>
+
+                    <StudentsCounter />
+                  </div>
 
                   {/* شوف WISO بيشتغل إزاي */}
                   <Button
