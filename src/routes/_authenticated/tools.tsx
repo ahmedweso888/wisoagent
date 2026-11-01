@@ -1028,9 +1028,16 @@ function ToolsPage() {
 
       <section className="mt-6">
         <Card>
-          <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
-            <CardTitle className="text-lg">طلبات الأدوات (لو عملت اكتر من 10 طلبات خد اسكرين شوت وابعت لفريق الدعم واكسب 100ج كاش باك)</CardTitle>
-          </CardHeader>
+  <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
+    <CardTitle className="text-lg">
+      طلبات الأدوات
+    </CardTitle>
+
+    <p className="text-sm font-semibold text-emerald-500">
+      لو عملت أكتر من 10 طلبات، خد اسكرين شوت وابعتها لفريق الدعم واكسب 100 جنيه كاش باك!
+    </p>
+  </CardHeader>
+
 
           <CardContent className="space-y-2 p-4 pt-0 sm:p-6 sm:pt-0">
             {(orders.data ?? []).slice(0, 6).map((item) => (
