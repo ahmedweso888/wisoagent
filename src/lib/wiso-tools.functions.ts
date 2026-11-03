@@ -471,6 +471,7 @@ export const adminGetToolOrders = createServerFn({
         ...order,
         student_name: profile?.full_name ?? null,
         student_phone: profile?.phone ?? null,
+        student_stage: null,
       };
     });
   });

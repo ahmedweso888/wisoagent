@@ -43,6 +43,10 @@ function AdminToolsPage() {
     "pending" | "confirmed" | "rejected" | "all"
   >("pending");
 
+  const [productFilter, setProductFilter] = useState<
+    "all" | "qureo" | "financial_literacy" | "combined"
+  >("all");
+
   const [visiblePhones, setVisiblePhones] = useState<
     Record<string, boolean>
   >({});
@@ -188,6 +192,77 @@ function AdminToolsPage() {
   const productName = (key: string) =>
     catalog.data?.products.find((item) => item.key === key)?.name ?? key;
 
+  const getProductCategory = (key: string) => {
+    const normalized = key.toLowerCase();
+
+    if (
+      normalized.includes("qureo") &&
+      (normalized.includes("financial") || normalized.includes("sprix"))
+    ) {
+      return "combined";
+    }
+
+    if (normalized === "qureo" || normalized.includes("qureo")) {
+      return "qureo";
+    }
+
+    if (
+      normalized.includes("financial_literacy") ||
+      normalized.includes("sprix") ||
+      normalized === "financial_literacy"
+    ) {
+      return "financial_literacy";
+    }
+
+    return "other";
+  };
+
+  const isProgrammingOrder = (key: string) => {
+    const name = productName(key).toLowerCase();
+    return (
+      key.toLowerCase().includes("program") ||
+      name.includes("program") ||
+      name.includes("برمجة") ||
+      name.includes("برمجه")
+    );
+  };
+
+  const getStudentStageLabel = (stage: string | null | undefined) => {
+    if (!stage?.trim()) return "غير محدد";
+
+    const value = stage.trim().toLowerCase();
+
+    if (
+      value.includes("second_baccalaureate") ||
+      value.includes("second baccalaureate") ||
+      value.includes("bac2") ||
+      value.includes("2bac") ||
+      value.includes("تانية بكالوريا") ||
+      value.includes("الثانية بكالوريا")
+    ) {
+      return "تانية بكالوريا";
+    }
+
+    if (
+      value.includes("first_secondary") ||
+      value.includes("first secondary") ||
+      value.includes("first_year_secondary") ||
+      value.includes("1sec") ||
+      value.includes("أولى ثانوي") ||
+      value.includes("اولى ثانوي") ||
+      value.includes("الأولى ثانوي")
+    ) {
+      return "أولى ثانوي";
+    }
+
+    return stage;
+  };
+
+  const filteredOrders = (orders.data ?? []).filter((item) => {
+    if (productFilter === "all") return true;
+    return getProductCategory(item.product_key) === productFilter;
+  });
+
   const togglePhone = (orderId: string) => {
     setVisiblePhones((current) => ({
       ...current,
@@ -274,7 +349,27 @@ function AdminToolsPage() {
             ))}
           </div>
 
-          {(orders.data ?? []).map((item) => (
+          <div className="flex flex-wrap gap-2 border-t pt-4">
+            {(
+              [
+                ["all", "كل الأدوات"],
+                ["qureo", "Qureo"],
+                ["financial_literacy", "الثقافة المالية"],
+                ["combined", "Qureo + الثقافة المالية"],
+              ] as const
+            ).map(([value, label]) => (
+              <Button
+                key={value}
+                size="sm"
+                variant={productFilter === value ? "default" : "outline"}
+                onClick={() => setProductFilter(value)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+
+          {filteredOrders.map((item) => (
             <div
               key={item.id}
               className="rounded-2xl border p-4"
@@ -301,6 +396,13 @@ function AdminToolsPage() {
                     اسم الطالب:{" "}
                     {item.student_name || "غير متوفر"}
                   </p>
+
+                  {isProgrammingOrder(item.product_key) ? (
+                    <p className="mt-1 text-sm font-semibold text-primary">
+                      المرحلة الدراسية:{" "}
+                      {getStudentStageLabel(item.student_stage)}
+                    </p>
+                  ) : null}
 
                   {/* User ID الأصلي بدون حذف */}
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -490,7 +592,7 @@ function AdminToolsPage() {
             </div>
           ))}
 
-          {!orders.data?.length ? (
+          {!filteredOrders.length ? (
             <p className="py-6 text-sm text-muted-foreground">
               لا توجد طلبات في هذا التصنيف.
             </p>
