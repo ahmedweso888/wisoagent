@@ -662,22 +662,30 @@ export const adminReviewPayment = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
     );
-
-    const rpcParams = {
-      _request: data.request,
-      _approve: data.approve,
-      _admin_id: context.adminId,
-      ...(data.reason?.trim()
-        ? { _reason: data.reason.trim() }
-        : {}),
-    };
+    const reason = data.reason?.trim();
 
     const { data: result, error } = await supabaseAdmin.rpc(
       "admin_review_wiso_payment",
-      rpcParams,
+      {
+        _request: data.request,
+        _approve: data.approve,
+        ...(reason ? { _reason: reason } : {}),
+        _admin_id: context.adminId,
+      },
     );
 
-    if (error) throw error;
+    if (error) {
+      console.error("admin_review_wiso_payment failed:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+
+      throw new Error(
+        `Payment review failed [${error.code}]: ${error.message}`,
+      );
+    }
 
     return result;
   });
