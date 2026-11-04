@@ -112,6 +112,7 @@ const ADMIN_NAV = [
   { to: "/admin/ai", label: "إعدادات الذكاء" },
   { to: "/admin/requests", label: "الطلبات الخاصة" },
   { to: "/admin/center-requests", label: "طلبات السناتر" },
+  { to: "/admin/code-requests", label: "طلبات الكود" },
   { to: "/admin/tools", label: "أدوات WISO" },
   { to: "/admin/system", label: "إعدادات النظام" },
 ] as const;

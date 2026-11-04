@@ -16,6 +16,7 @@ import {
   saveToolAccount,
   saveToolAccountsAtomically,
   decryptToolCredentials,
+  encryptToolCredentials,
 } from "@/services/wiso-tools/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -116,40 +117,97 @@ export const submitToolPayment = createServerFn({
   });
 
 /* ============================================================================
- * Redeem tool code
+ * Submit a tool-code request (code is consumed atomically with request creation)
  * ========================================================================== */
 
-export const redeemToolCode = createServerFn({
-  method: "POST",
-})
+export const submitToolCodeRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { code: string }) => {
+  .inputValidator((input: { code: string; id: string; password: string }) => {
     const code = input.code.trim();
+    const id = input.id.trim();
+    const password = input.password;
 
-    if (!code) {
-      throw new Error("CODE_REQUIRED");
+    if (!code) throw new Error("CODE_REQUIRED");
+    if (!id || !password || id.length > 200 || password.length > 500) {
+      throw new Error("TOOL_CREDENTIALS_INVALID");
     }
 
-    return {
-      code,
-    };
+    return { code, id, password };
   })
   .handler(async ({ context, data }) => {
-    const { data: rpcData, error } = await context.supabase.rpc(
-      "redeem_tool_code",
+    const credentialsCiphertext = encryptToolCredentials({
+      id: data.id,
+      password: data.password,
+    });
+
+    const { data: result, error } = await context.supabase.rpc(
+      "submit_tool_code_request",
       {
         _code: data.code,
+        _credentials_ciphertext: credentialsCiphertext,
       },
     );
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
+    return result;
+  });
 
-    return {
-      success: true,
-      data: rpcData,
-    };
+/* ============================================================================
+ * Admin - tool-code requests
+ * ========================================================================== */
+
+export const adminGetToolCodeRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAdmin])
+  .handler(async () => {
+    const { data, error } = await supabaseAdmin
+      .from("tool_code_requests")
+      .select("id,student_name,student_phone,credentials_ciphertext,status,created_at,resolved_at,center_codes!tool_code_requests_code_id_fkey(code_type)")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (error) throw error;
+
+    // Credentials are decrypted only on the server, after the admin middleware.
+    return (data ?? []).map((request) => {
+      const credentials = decryptToolCredentials(request.credentials_ciphertext);
+      return {
+        id: request.id,
+        student_name: request.student_name,
+        student_phone: request.student_phone,
+        account_id: credentials.id,
+        account_password: credentials.password,
+        tool_code_type: Array.isArray(request.center_codes)
+          ? request.center_codes[0]?.code_type ?? null
+          : request.center_codes?.code_type ?? null,
+        status: request.status,
+        created_at: request.created_at,
+        resolved_at: request.resolved_at,
+      };
+    });
+  });
+
+export const adminResolveToolCodeRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAdmin])
+  .inputValidator((input: { requestId: string }) => {
+    if (!input.requestId) throw new Error("REQUEST_ID_REQUIRED");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { data: updated, error } = await supabaseAdmin
+      .from("tool_code_requests")
+      .update({
+        status: "resolved",
+        resolved_at: new Date().toISOString(),
+        resolved_by: context.adminId,
+      })
+      .eq("id", data.requestId)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!updated) throw new Error("REQUEST_NOT_PENDING");
+    return { success: true };
   });
 
 /* ============================================================================

@@ -12,6 +12,7 @@ import {
   Package,
   Building2,
   Activity,
+  ClipboardList,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/common/PageHeader";
@@ -93,6 +94,12 @@ const ADMIN_LINKS = [
     title: "المراكز والأكواد",
     description: "إنشاء المراكز وتوليد أكواد التفعيل ومتابعتها.",
     icon: Building2,
+  },
+  {
+    to: "/admin/code-requests",
+    title: "طلبات أكواد الأدوات",
+    description: "متابعة الطلبات المرسلة بالأكواد ووضع علامة تم الحل.",
+    icon: ClipboardList,
   },
   {
     to: "/admin/jobs",

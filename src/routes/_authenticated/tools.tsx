@@ -26,13 +26,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { createUuid } from "@/lib/uuid";
-import { ToolCredentialSubmissionPage } from "@/components/tools/ToolCredentialSubmissionPage";
 import {
   getMyToolAccess,
   getMyToolOrders,
   getToolAccountStatus,
   getToolCatalogFn,
-  redeemToolCode,
+  submitToolCodeRequest,
   submitToolPayment,
 } from "@/lib/wiso-tools.functions";
 import type { ToolProductKey } from "@/services/wiso-tools/server";
@@ -250,10 +249,6 @@ function ToolsPage() {
   const [accountPassword, setAccountPassword] = useState("");
   const [showAccountPassword, setShowAccountPassword] = useState(false);
 
-  const [redeemedToolKeys, setRedeemedToolKeys] = useState<
-    Array<"financial_literacy" | "qureo">
-  >([]);
-
   const [selectedProduct, setSelectedProduct] =
     useState<ToolProductKey | null>(null);
 
@@ -336,68 +331,42 @@ function ToolsPage() {
   };
 
   /* =========================================
-     REDEEM MUTATION
+     TOOL CODE REQUEST MUTATION
   ========================================= */
 
   const redeem = useMutation({
-    mutationFn: () => {
-      setRedeemedToolKeys([]);
-      return redeemToolCode({ data: { code } });
-    },
-
-    onSuccess: async (result) => {
+    mutationFn: () =>
+      submitToolCodeRequest({
+        data: {
+          code,
+          id: accountId,
+          password: accountPassword,
+        },
+      }),
+    onSuccess: () => {
       setCode("");
-
-      const activation = (result as {
-        data?: { code_type?: string };
-      })?.data;
-
-      const type = activation?.code_type;
-
-      const keys =
-        type === "sprix_qureo"
-          ? (["financial_literacy", "qureo"] as const)
-          : type === "sprix"
-            ? (["financial_literacy"] as const)
-            : type === "qureo"
-              ? (["qureo"] as const)
-              : [];
-
-      if (!keys.length) {
-        toast.error(
-          "تم التحقق من الكود لكن تعذر تحديد نوع التفعيل. حدّث الصفحة وتواصل مع الدعم.",
-        );
-        return;
-      }
-
-      setRedeemedToolKeys([...keys]);
-
-      toast.success(
-        "تم تفعيل الكود بنجاح. أدخل بيانات الحساب أدناه.",
-      );
-
-      await Promise.all([
-        qc.invalidateQueries({
-          queryKey: ["wiso-tools-access"],
-        }),
-        qc.invalidateQueries({
-          queryKey: ["wiso-tools-attempt-status"],
-        }),
-      ]);
+      setAccountId("");
+      setAccountPassword("");
+      toast.success("تم إرسال طلبك بنجاح، وتم استهلاك الكود.");
     },
-
-    onError: (error: Error) =>
+    onError: (error: Error) => {
+      const message = error.message ?? "";
       toast.error(
-        error.message === "code_already_used"
+        message.includes("code_already_used")
           ? "الكود مستخدم بالفعل."
-          : error.message === "code_expired"
+          : message.includes("code_expired")
             ? "الكود منتهي الصلاحية."
-            : error.message === "not_tool_code"
+            : message.includes("not_tool_code")
               ? "هذا كود باقة أسئلة وليس كود أدوات."
-              : error.message === "invalid_code"
+              : message.includes("invalid_code")
                 ? "كود التفعيل غير صحيح."
-                : error.message,
-      ),
+                : message.includes("TOOL_CREDENTIALS_INVALID")
+                  ? "أدخل الـ ID وكلمة المرور بشكل صحيح."
+                  : message.includes("student_not_eligible")
+                    ? "لا يمكن إرسال طلب لهذا الحساب."
+                    : message,
+      );
+    },
   });
 
   /* =========================================
@@ -952,28 +921,25 @@ function ToolsPage() {
           </Card>
         </section>
       ) : (
-        /* فورم تفعيل الكود */
+        /* فورم إرسال طلب الكود */
 
         <section className="mt-4 max-w-3xl space-y-4">
           <Card>
             <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <KeyRound className="size-5" />
-                تفعيل كود
+                إرسال طلب بالكود
               </CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
               <p className="text-sm leading-6 text-muted-foreground">
-                أدخل كود SPRIX أو Qureo أو SPRIX + Qureo. أكواد الأدوات
-                منفصلة عن أكواد باقات الأسئلة.
+                أدخل كود SPRIX أو Qureo أو SPRIX + Qureo مع بيانات الحساب المطلوب.
+                سيتم التحقق من الكود واستهلاكه عند نجاح إرسال الطلب.
               </p>
 
               <div className="space-y-2">
-                <Label htmlFor="tool-activation-code">
-                  كود تفعيل الأداة
-                </Label>
-
+                <Label htmlFor="tool-activation-code">كود التفعيل</Label>
                 <Input
                   id="tool-activation-code"
                   value={code}
@@ -984,43 +950,66 @@ function ToolsPage() {
                 />
               </div>
 
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="tool-request-account-id">Account ID</Label>
+                  <Input
+                    id="tool-request-account-id"
+                    value={accountId}
+                    onChange={(event) => setAccountId(event.target.value)}
+                    placeholder="أدخل ID الحساب"
+                    autoComplete="username"
+                    maxLength={200}
+                    disabled={redeem.isPending}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tool-request-account-password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="tool-request-account-password"
+                      type={showAccountPassword ? "text" : "password"}
+                      value={accountPassword}
+                      onChange={(event) => setAccountPassword(event.target.value)}
+                      placeholder="أدخل كلمة المرور"
+                      autoComplete="current-password"
+                      maxLength={500}
+                      disabled={redeem.isPending}
+                      className="pl-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAccountPassword((value) => !value)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      aria-label={showAccountPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                    >
+                      {showAccountPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <Button
                 className="w-full"
-                disabled={!code.trim() || redeem.isPending}
+                disabled={!code.trim() || !accountId.trim() || !accountPassword || redeem.isPending}
                 onClick={() => redeem.mutate()}
               >
                 <KeyRound className="ml-2 size-4" />
-                {redeem.isPending ? "جارٍ التفعيل..." : "تفعيل الكود"}
+                {redeem.isPending ? "جارٍ التحقق والإرسال..." : "إرسال الطلب"}
               </Button>
 
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm leading-6">
                 <div className="flex items-start gap-2">
                   <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-
                   <span>
-                    يتم التحقق من الكود على الخادم، ولن يظهر فورم الحساب
-                    إلا بعد نجاح التفعيل.
+                    لا يتم استهلاك الكود إلا إذا كان صحيحًا وتم تسجيل الطلب بنجاح.
+                    بيانات الحساب تُحفظ مشفّرة.
                   </span>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {redeemedToolKeys.length > 0 ? (
-            <ToolCredentialSubmissionPage
-              key={redeemedToolKeys.join("-")}
-              toolKey={redeemedToolKeys[0] ?? "financial_literacy"}
-              toolKeys={redeemedToolKeys}
-              title={
-                redeemedToolKeys.length === 2
-                  ? "SPRIX + Qureo"
-                  : redeemedToolKeys[0] === "qureo"
-                    ? "Qureo"
-                    : "SPRIX للثقافة المالية"
-              }
-              description="أدخل بيانات الحساب مرة واحدة، وراجعها في خطوتي التأكيد قبل الإرسال."
-            />
-          ) : null}
         </section>
       )}
 

@@ -34,6 +34,7 @@ import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAdminBundlesRouteImport } from './routes/_authenticated/admin.bundles'
 import { Route as AuthenticatedAdminCenterRequestsRouteImport } from './routes/_authenticated/admin.center-requests'
 import { Route as AuthenticatedAdminCentersRouteImport } from './routes/_authenticated/admin.centers'
+import { Route as AuthenticatedAdminCodeRequestsRouteImport } from './routes/_authenticated/admin.code-requests'
 import { Route as AuthenticatedAdminCurriculumRouteImport } from './routes/_authenticated/admin.curriculum'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
 import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin.notifications'
@@ -174,6 +175,12 @@ const AuthenticatedAdminCentersRoute =
     path: '/admin/centers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminCodeRequestsRoute =
+  AuthenticatedAdminCodeRequestsRouteImport.update({
+    id: '/admin/code-requests',
+    path: '/admin/code-requests',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminCurriculumRoute =
   AuthenticatedAdminCurriculumRouteImport.update({
     id: '/admin/curriculum',
@@ -256,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/admin/bundles': typeof AuthenticatedAdminBundlesRoute
   '/admin/center-requests': typeof AuthenticatedAdminCenterRequestsRoute
   '/admin/centers': typeof AuthenticatedAdminCentersRoute
+  '/admin/code-requests': typeof AuthenticatedAdminCodeRequestsRoute
   '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -292,6 +300,7 @@ export interface FileRoutesByTo {
   '/admin/bundles': typeof AuthenticatedAdminBundlesRoute
   '/admin/center-requests': typeof AuthenticatedAdminCenterRequestsRoute
   '/admin/centers': typeof AuthenticatedAdminCentersRoute
+  '/admin/code-requests': typeof AuthenticatedAdminCodeRequestsRoute
   '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -330,6 +339,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/bundles': typeof AuthenticatedAdminBundlesRoute
   '/_authenticated/admin/center-requests': typeof AuthenticatedAdminCenterRequestsRoute
   '/_authenticated/admin/centers': typeof AuthenticatedAdminCentersRoute
+  '/_authenticated/admin/code-requests': typeof AuthenticatedAdminCodeRequestsRoute
   '/_authenticated/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/admin/bundles'
     | '/admin/center-requests'
     | '/admin/centers'
+    | '/admin/code-requests'
     | '/admin/curriculum'
     | '/admin/jobs'
     | '/admin/notifications'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/admin/bundles'
     | '/admin/center-requests'
     | '/admin/centers'
+    | '/admin/code-requests'
     | '/admin/curriculum'
     | '/admin/jobs'
     | '/admin/notifications'
@@ -441,6 +453,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/bundles'
     | '/_authenticated/admin/center-requests'
     | '/_authenticated/admin/centers'
+    | '/_authenticated/admin/code-requests'
     | '/_authenticated/admin/curriculum'
     | '/_authenticated/admin/jobs'
     | '/_authenticated/admin/notifications'
@@ -641,6 +654,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCentersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/code-requests': {
+      id: '/_authenticated/admin/code-requests'
+      path: '/admin/code-requests'
+      fullPath: '/admin/code-requests'
+      preLoaderRoute: typeof AuthenticatedAdminCodeRequestsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/curriculum': {
       id: '/_authenticated/admin/curriculum'
       path: '/admin/curriculum'
@@ -732,6 +752,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBundlesRoute: typeof AuthenticatedAdminBundlesRoute
   AuthenticatedAdminCenterRequestsRoute: typeof AuthenticatedAdminCenterRequestsRoute
   AuthenticatedAdminCentersRoute: typeof AuthenticatedAdminCentersRoute
+  AuthenticatedAdminCodeRequestsRoute: typeof AuthenticatedAdminCodeRequestsRoute
   AuthenticatedAdminCurriculumRoute: typeof AuthenticatedAdminCurriculumRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
   AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
@@ -763,6 +784,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminBundlesRoute: AuthenticatedAdminBundlesRoute,
   AuthenticatedAdminCenterRequestsRoute: AuthenticatedAdminCenterRequestsRoute,
   AuthenticatedAdminCentersRoute: AuthenticatedAdminCentersRoute,
+  AuthenticatedAdminCodeRequestsRoute: AuthenticatedAdminCodeRequestsRoute,
   AuthenticatedAdminCurriculumRoute: AuthenticatedAdminCurriculumRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
   AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
