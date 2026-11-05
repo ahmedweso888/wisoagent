@@ -151,7 +151,7 @@ function RevealSection({
  * العد متزامن عند جميع الزوار لأنه يعتمد على الوقت وليس على حالة المتصفح.
  */
 function StudentsCounter() {
-  const BASE_COUNT = 6643;
+  const BASE_COUNT = 10045;
   const START_TIME = new Date("2026-11-01T14:20:00+02:00").getTime();
   const INTERVAL_MS = 30 * 60 * 1000;
 
