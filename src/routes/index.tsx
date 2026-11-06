@@ -1009,7 +1009,7 @@ function Landing() {
               id="instructions-dialog-title"
               className="text-center font-display text-2xl font-black text-red-700 sm:text-3xl"
             >
-              تعليمات هامة
+              منصتنا شغاله ازاي 
             </h2>
             <div className="mx-auto mt-3 h-1 w-20 rounded-full bg-red-400" />
 

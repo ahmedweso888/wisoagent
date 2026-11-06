@@ -102,18 +102,18 @@ function DashboardPage() {
 
               <div>
                 <h2 className="text-lg font-bold">
-                  أدوات WISO في مكان واحد
+                  خدمات WISO في مكان واحد 
                 </h2>
 
                 <p className="mt-1 text-sm text-muted-foreground">
-                  انتقل إلى صفحة الأدوات واكتشف الأدوات المتاحة لحسابك.
+                  انتقل إلى صفحة الخدمات واكتشف الخدمات المتاحة لحسابك.
                 </p>
               </div>
             </div>
 
             <Button asChild className="w-full gap-2 sm:w-auto">
               <Link to="/tools">
-                اكتشف أدوات WISO
+                اكتشف خدمات WISO
                 <ArrowLeft className="size-4" />
               </Link>
             </Button>

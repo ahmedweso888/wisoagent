@@ -278,7 +278,7 @@ function ToolsPage() {
   // التأكد من اكتمال البيانات قبل الانتقال للتأكيد الثاني.
   const handleFirstConfirmation = () => {
     if (!selectedProduct) {
-      toast.error("من فضلك اختر الأداة المطلوبة أولًا.");
+      toast.error("من فضلك اختر الخدمه المطلوبة أولًا.");
       return;
     }
 
@@ -470,7 +470,7 @@ function ToolsPage() {
   return (
     <main dir="rtl" className="page-shell">
       <PageHeader
-        title="أدوات WISO"
+        title="خدمات WISO"
         subtitle="وكلاء مستقلة عن باقات الأسئلة، مرتبطة بحساب WISO الخاص بك. لديك محاولة واحدة لإدخال بياناتك في كل اشتراك. في حالة حدوث خطأ أثناء إرسال البيانات، تواصل مع الدعم وأرسل الـ ID والباسوورد الصحيحين، مع مراعاة الحروف الكبيرة والصغيرة."
       />
 
@@ -599,7 +599,7 @@ function ToolsPage() {
           onClick={() => setActiveTab("purchase")}
         >
           <CreditCard className="ml-2 size-4" />
-          شراء الأدوات
+          شراء خدمة
         </Button>
 
         <Button
@@ -621,11 +621,11 @@ function ToolsPage() {
             <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <CreditCard className="size-5" />
-                شراء أداة
+                شراء خدمة من خدماتنا
               </CardTitle>
 
               <p className="text-sm leading-6 text-muted-foreground">
-                اختر الأداة المطلوبة، وأدخل بيانات حسابك، ثم حدد طريقة
+                اختر الخدمة المطلوبة، وأدخل بيانات حسابك، ثم حدد طريقة
                 الدفع وأرسل إثبات التحويل لمراجعة طلبك.
               </p>
             </CardHeader>
@@ -633,16 +633,16 @@ function ToolsPage() {
             <CardContent className="space-y-5 p-4 pt-0 sm:p-6 sm:pt-0">
               {pending ? (
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm leading-6">
-                  لديك طلب دفع قيد المراجعة. سيتم تفعيل الأداة بعد
+                  لديك طلب دفع قيد المراجعة. سيتم تفعيل الخدمة بعد
                   اعتماد الإدارة.
                 </div>
               ) : null}
 
-              {/* اختيار الأداة */}
+              {/* اختيار الخدمة */}
 
               <div className="space-y-3">
                 <p className="text-sm font-bold">
-                  ١. اختر الأداة المطلوبة
+                  ١. اختر الخدمة المطلوبة
                 </p>
 
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -1001,7 +1001,7 @@ function ToolsPage() {
         <Card>
   <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
     <CardTitle className="text-lg">
-      طلبات الأدوات
+      طلبات الخدمات السابقة
     </CardTitle>
 
     <p className="text-sm font-semibold text-emerald-500">
@@ -1094,11 +1094,11 @@ function ToolsPage() {
             <div className="space-y-3 p-5">
               <div className="rounded-xl border border-border bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">
-                  الأداة المطلوبة
+                  الخدمة المطلوبة
                 </p>
 
                 <p className="mt-1 font-bold">
-                  {selectedProductDetails?.name ?? "لم يتم تحديد الأداة"}
+                  {selectedProductDetails?.name ?? "لم يتم تحديد الخدمة"}
                 </p>
 
                 {selectedProductDetails ? (
@@ -1240,7 +1240,7 @@ function ToolsPage() {
 
                     <p className="text-sm leading-6 text-muted-foreground">
                       بعد الإرسال، سيظهر طلبك للإدارة لمراجعة الدفع
-                      وتفعيل الأداة. لا ترسل الطلب إلا إذا كنت متأكدًا من
+                      وتفعيل الخدمة. لا ترسل الطلب إلا إذا كنت متأكدًا من
                       صحة البيانات والإيصال.
                     </p>
                   </div>
@@ -1249,7 +1249,7 @@ function ToolsPage() {
 
               <div className="rounded-xl border border-border bg-muted/30 p-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">الأداة</span>
+                  <span className="text-muted-foreground">الخدمة</span>
 
                   <span className="font-bold">
                     {selectedProductDetails?.name ?? "—"}

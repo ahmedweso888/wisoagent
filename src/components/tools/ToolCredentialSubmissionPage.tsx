@@ -146,7 +146,7 @@ export function ToolCredentialSubmissionPage({
       }
 
       if (message.includes("TOOL_ACCESS_REQUIRED")) {
-        toast.error("الأداة غير مفعّلة لحسابك أو انتهت صلاحية التفعيل.");
+        toast.error("الخدمة غير مفعّلة لحسابك أو انتهت صلاحية التفعيل.");
         return;
       }
 
@@ -191,7 +191,7 @@ export function ToolCredentialSubmissionPage({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShieldCheck className="size-5" />
-            تفعيل الأداة وإرسال بيانات الحساب
+            تفعيل الخدمة وإرسال بيانات الحساب
           </CardTitle>
         </CardHeader>
 
@@ -210,10 +210,10 @@ export function ToolCredentialSubmissionPage({
                 <LockKeyhole className="mt-0.5 size-5 shrink-0 text-amber-600" />
 
                 <div>
-                  <p className="font-bold">الأداة غير مفعّلة لحسابك</p>
+                  <p className="font-bold">الخدمة غير مفعّلة لحسابك</p>
 
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    اشترِ الأداة من قسم الدفع أو فعّل اشتراكك باستخدام
+                    اشترِ الخدمة من قسم الدفع أو فعّل اشتراكك باستخدام
                     كود التفعيل إذا كان متوفرًا لديك.
                   </p>
                 </div>
@@ -241,7 +241,7 @@ export function ToolCredentialSubmissionPage({
           ) : !attemptAvailable ? (
             <div className="rounded-xl border p-4 text-sm leading-6">
               لا توجد محاولة إرسال متاحة لهذا التفعيل حاليًا. إذا كنت
-              قد فعّلت الأداة للتو، حدّث الصفحة أو تواصل مع الدعم.
+              قد فعّلت الخدمة للتو، حدّث الصفحة أو تواصل مع الدعم.
             </div>
           ) : (
             <>
