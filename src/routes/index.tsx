@@ -977,6 +977,7 @@ function Landing() {
       {/* نافذة التعليمات الهامة */}
       {instructionsOpen && (
         <div
+        id="instructions"
           className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-6"
           onClick={() => setInstructionsOpen(false)}
         >
