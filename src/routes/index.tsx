@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   Check,
+  FileText,
   MessageCircle,
   PlayCircle,
   X,
@@ -144,7 +145,6 @@ function RevealSection({
   );
 }
 
-
 /**
  * عداد عدد الطلاب:
  * يبدأ من 6,643، ثم يزيد 3 كل 30 دقيقة من وقت البداية الثابت.
@@ -200,16 +200,16 @@ function StudentsCounter() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-[var(--hero-border)] bg-[var(--hero-surface)] px-4 py-2 text-center">
-      <span className="text-[11px] font-bold leading-5 text-[var(--hero-muted)] sm:text-xs">
-        عدد طلابنا اللي اشتركوا في خدماتنا
+    <div className="flex min-w-[220px] flex-col items-center justify-center rounded-2xl border border-emerald-400/70 bg-emerald-950/35 px-6 py-3 text-center shadow-[0_0_12px_rgba(52,211,153,0.35),0_0_28px_rgba(52,211,153,0.18)]">
+      <span className="text-xs font-extrabold leading-6 text-emerald-200 sm:text-sm">
+        عدد الطلاب المشتركين في خدماتنا
       </span>
       <motion.span
         key={count}
         initial={{ opacity: 0.75, y: 3 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="num text-xl font-black leading-7 text-[var(--hero-foreground)] sm:text-2xl"
+        className="num text-3xl font-black leading-10 text-emerald-300 drop-shadow-[0_0_12px_rgba(52,211,153,0.9)] sm:text-4xl"
         dir="ltr"
         aria-live="polite"
       >
@@ -227,8 +227,9 @@ function Landing() {
   const contest = usePublicContest();
   const flags = useFeatureFlags();
 
-  // نافذة دعم المنصة
+  // نوافذ الصفحة الرئيسية
   const [supportOpen, setSupportOpen] = useState(false);
+  const [instructionsOpen, setInstructionsOpen] = useState(false);
 
   const teachersVisible =
     flags.data?.["verified_teachers"] !== false &&
@@ -335,20 +336,33 @@ function Landing() {
                   }}
                   className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start"
                 >
-                  {/* تسجيل الدخول والعداد أسفله مباشرة */}
-                  <div className="flex flex-col items-center gap-2">
-                    <Button
-                      asChild
-                      size="lg"
-                      className="rounded-full"
-                    >
-                      <Link to={hero?.cta_href ?? "/auth"}>
-                        {heroCta}
-                        <ArrowLeft />
-                      </Link>
-                    </Button>
-
+                  {/* عدد الطلاب أولاً، ثم تسجيل الدخول وتعليمات هامة */}
+                  <div className="flex flex-col items-center gap-3">
                     <StudentsCounter />
+
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <Button
+                        asChild
+                        size="lg"
+                        className="rounded-full"
+                      >
+                        <Link to={hero?.cta_href ?? "/auth"}>
+                          {heroCta}
+                          <ArrowLeft />
+                        </Link>
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={() => setInstructionsOpen(true)}
+                        className="gap-2 rounded-full border-red-500/70 bg-red-500/10 font-bold text-red-500 shadow-[0_0_16px_rgba(239,68,68,0.22)] transition-all hover:border-red-500 hover:bg-red-500/20 hover:text-red-600"
+                      >
+                        <FileText className="size-5" />
+                        تعليمات هامة
+                      </Button>
+                    </div>
                   </div>
 
                   {/* شوف WISO بيشتغل إزاي */}
@@ -959,6 +973,92 @@ function Landing() {
       </main>
 
       <Footer />
+
+      {/* نافذة التعليمات الهامة */}
+      {instructionsOpen && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-6"
+          onClick={() => setInstructionsOpen(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 18 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="instructions-dialog-title"
+            className="relative max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-md border border-red-300/70 bg-[#fffdf7] px-6 py-8 text-right text-red-700 shadow-[0_20px_80px_rgba(0,0,0,0.45)] sm:px-10 sm:py-10"
+            dir="rtl"
+          >
+            <button
+              type="button"
+              onClick={() => setInstructionsOpen(false)}
+              aria-label="إغلاق"
+              className="absolute left-4 top-4 rounded-full p-2 text-red-500 transition-colors hover:bg-red-100"
+            >
+              <X className="size-5" />
+            </button>
+
+            <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full border-2 border-red-300 bg-red-50">
+              <FileText className="size-7 text-red-600" />
+            </div>
+
+            <h2
+              id="instructions-dialog-title"
+              className="text-center font-display text-2xl font-black text-red-700 sm:text-3xl"
+            >
+              تعليمات هامة
+            </h2>
+            <div className="mx-auto mt-3 h-1 w-20 rounded-full bg-red-400" />
+
+            <div className="mt-7 space-y-5 text-[15px] font-semibold leading-8 text-red-800 sm:text-base">
+              <p className="text-lg font-black">
+                أهلاً بيك عزيزنا الطالب ❤️
+              </p>
+
+              <p>
+                إحنا فريق مهندسين البرمجة اللي صمموا وطوروا منصة
+                <span className="mx-1 font-black">WISO Agent</span>.
+                اشتغلنا على تطوير المنصة لمدة سنة كاملة، وكان هدفنا نقدم
+                خدمة تساعدك وتوفر  عليك وقت ومجهود  كبير عشان احنا حاسين بمعانتك.
+              </p>
+
+              <p>
+                مهم تعرف إن الخدمة مش مجرد أدوات تقليدية أو بوت تليجرام，
+                 ومش خدمة هاكينج. سيستم المنصه باختصار هوا سيستم معمول  مخصوص لخدمتكم وبيحل كانو
+                  روبوت بيفتح حسابك وبيحل يدوي كانو بني  ادم  بالضبط ومش هنقدر نشرح اكتر من كدا عشا سريه نظامنا .
+              </p>
+
+              <p>
+                وبالنسبة لبياناتك، فإحنا بنهتم بسرّيتها، وبنستخدم معيار
+                <span className="mx-1 font-black">AES-256-GCM</span>
+                لتشفير البيانات المخزنة، مع تأمين الاتصال باستخدام
+                <span className="mx-1 font-black">TLS 1.3</span>
+                 ومحدش  بيشوف بياناتك غير السيستم فقط وفي حاله انك دخلت بياناتك غلط والدعم اتواصل معاك عشان يساعدك، فالدعم بيشوف بياناتك بس عشان يساعدك وبيتم مسحها بعد كدا.
+              </p>
+
+              <p>
+                كمان اختبرنا النظام بشكل متكرر، بأكتر من 600 اختبار，
+                علشان نراجع الأداء ونحسّن جودة الخدمة قبل ما نوصلها ليك.
+              </p>
+
+              <p className="border-t border-red-200 pt-5 text-center font-black">
+                شكرًا لثقتك في WISO Agent، وشكرًا لتقديرك لمجهودنا ❤️
+                وشكرا انكم وصلتونا لاكتر من 10 الاف طالب وطالبه ف 15  يوم بس من اول ما نزلنا المنصه وده شرف كبير لينا.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setInstructionsOpen(false)}
+              className="mt-8 w-full rounded-xl bg-red-600 px-5 py-3 font-black text-white transition-colors hover:bg-red-700"
+            >
+              فهمت، شكرًا
+            </button>
+          </motion.div>
+        </div>
+      )}
 
       {/* نافذة اختيار دعم WISO */}
       {supportOpen && (

@@ -45,6 +45,13 @@ export const Route = createFileRoute("/_authenticated/tools")({
 ========================================= */
 
 function SubmissionSuccessNotice() {
+  const goToOrders = () => {
+    document.getElementById("tool-orders")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <div
       id="tool-submission-success"
@@ -53,44 +60,24 @@ function SubmissionSuccessNotice() {
     >
       <style>{`
         @keyframes drawCircle {
-          from {
-            stroke-dashoffset: 283;
-          }
-          to {
-            stroke-dashoffset: 0;
-          }
+          from { stroke-dashoffset: 283; }
+          to { stroke-dashoffset: 0; }
         }
 
         @keyframes drawCheck {
-          from {
-            stroke-dashoffset: 55;
-          }
-          to {
-            stroke-dashoffset: 0;
-          }
+          from { stroke-dashoffset: 55; }
+          to { stroke-dashoffset: 0; }
         }
 
         @keyframes successPop {
-          0% {
-            transform: scale(0.7);
-            opacity: 0;
-          }
-          70% {
-            transform: scale(1.08);
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
+          0% { transform: scale(0.7); opacity: 0; }
+          70% { transform: scale(1.08); }
+          100% { transform: scale(1); opacity: 1; }
         }
 
         @keyframes successGlow {
-          0%, 100% {
-            box-shadow: 0 0 0 0 rgba(16,185,129,0);
-          }
-          50% {
-            box-shadow: 0 0 25px 2px rgba(16,185,129,0.12);
-          }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+          50% { box-shadow: 0 0 25px 2px rgba(16,185,129,0.12); }
         }
 
         .success-icon {
@@ -115,8 +102,6 @@ function SubmissionSuccessNotice() {
       `}</style>
 
       <div className="success-card rounded-xl">
-        {/* دائرة النجاح وعلامة الصح */}
-
         <div className="success-icon mx-auto mb-5 flex size-24 items-center justify-center">
           <svg
             viewBox="0 0 100 100"
@@ -149,35 +134,29 @@ function SubmissionSuccessNotice() {
           تم استلام طلبك بنجاح
         </h2>
 
-        <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-muted-foreground sm:text-base">
-          تم إرسال طلبك إلى الإدارة بنجاح، وهو الآن في انتظار المراجعة
-          والاعتماد.
-        </p>
+        <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <p className="text-lg font-extrabold text-amber-600">
+            طلبك قيد المراجعة
+          </p>
 
-        {/* تفاصيل المراجعة والتنفيذ */}
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
+            أول ما يبقى طلبك مقبول، هيتم الحل خلال 5 دقائق.
+          </p>
+        </div>
 
-        <div className="mt-6 space-y-4 text-right">
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-            <p className="font-bold text-amber-600">
-              مراجعة الطلب
-            </p>
+        <Button
+          type="button"
+          onClick={goToOrders}
+          className="mt-5 w-full sm:w-auto"
+        >
+          تقدر تتابع طلبك من هنا
+        </Button>
 
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              في حالة وجود ضغط على النظام، قد تستغرق مراجعة طلبك مدة
-              تصل إلى 8 ساعات كحد أقصى.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-            <p className="font-bold text-emerald-600">
-              تنفيذ الطلب
-            </p>
-
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              بمجرد قبول طلبك من الإدارة، يتم تنفيذ الحل على حسابك
-              خلال 5 دقائق كحد أقصى.
-            </p>
-          </div>
+        <div className="mt-5 rounded-xl border border-red-500/25 bg-red-500/5 p-4 text-right">
+          <p className="text-sm font-extrabold leading-7 text-red-600">
+            برجاء عدم إرسال للدعم أي رسائل إلا بعد مرور 12 ساعة على طلبك،
+            عشان ضغط الرسائل عليهم كبير، وشكرًا لتفهمكم.
+          </p>
         </div>
 
         <div className="mt-6 border-t border-border/60 pt-4">
@@ -1015,7 +994,10 @@ function ToolsPage() {
 
       {/* طلبات الأدوات */}
 
-      <section className="mt-6">
+      <section
+  id="tool-orders"
+  className="mt-6 scroll-mt-24"
+>
         <Card>
   <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
     <CardTitle className="text-lg">
