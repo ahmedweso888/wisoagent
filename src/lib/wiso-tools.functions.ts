@@ -163,7 +163,7 @@ export const adminGetToolCodeRequests = createServerFn({ method: "GET" })
       .from("tool_code_requests")
       .select("id,student_name,student_phone,credentials_ciphertext,status,created_at,resolved_at,center_codes!tool_code_requests_code_id_fkey(code_type)")
       .order("created_at", { ascending: false })
-      .limit(500);
+      .limit(50000);
 
     if (error) throw error;
 

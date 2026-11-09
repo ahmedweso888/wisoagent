@@ -57,7 +57,7 @@ export const adminListCenterRequests = createServerFn({ method: "GET" })
       .from("center_requests")
       .select("id,user_id,center_name,center_address,contact_number,status,admin_note,reviewed_by,reviewed_at,created_at,updated_at")
       .order("created_at", { ascending: false })
-      .limit(500);
+      .limit(50000);
     if (error) throw error;
     return data ?? [];
   });

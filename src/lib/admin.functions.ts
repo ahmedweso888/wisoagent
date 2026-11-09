@@ -396,7 +396,7 @@ export const adminGetCenterCodes = createServerFn({ method: "GET" })
       .from("center_codes")
       .select("id,code,center_id,plan_id,code_type,expires_at,sprix_access_days,used_by,used_at,created_at")
       .order("created_at", { ascending: false })
-      .limit(500);
+      .limit(50000);
     if (data.centerId) query = query.eq("center_id", data.centerId);
     const { data: rows, error } = await query;
     if (error) throw error;
