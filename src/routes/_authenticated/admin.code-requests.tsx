@@ -1,203 +1,861 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { CheckCircle2, ClipboardList, Clock3, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { Building2 } from "lucide-react";
 
 import { PageHeader } from "@/components/common/PageHeader";
+import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/useAuth";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  adminGetToolCodeRequests,
-  adminResolveToolCodeRequest,
-} from "@/lib/wiso-tools.functions";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/admin/code-requests")({
+import {
+  adminCreateCenter,
+  adminGenerateCenterCodes,
+  adminGetCenterCodes,
+  adminGetCenters,
+  adminGetPlans,
+} from "@/lib/admin.functions";
+
+import { useAuth } from "@/hooks/useAuth";
+
+export const Route = createFileRoute("/_authenticated/admin/centers")({
   head: () => ({
     meta: [
-      { title: "طلبات أكواد الأدوات — لوحة الإدارة" },
+      { title: "المراكز وأكواد التفعيل — لوحة الإدارة" },
+      {
+        name: "description",
+        content: "إدارة مراكز WISO وتوليد أكواد التفعيل ومتابعة استخدامها.",
+      },
+      { property: "og:title", content: "المراكز وأكواد التفعيل — لوحة الإدارة" },
+      {
+        property: "og:description",
+        content: "إدارة مراكز WISO وتوليد أكواد التفعيل ومتابعة استخدامها.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AdminToolCodeRequestsPage,
+  component: AdminCentersPage,
 });
 
-type CodeRequest = {
-  id: string;
-  student_name: string | null;
-  student_phone: string | null;
-  account_id: string;
-  account_password: string;
-  tool_code_type: string | null;
-  status: "pending" | "resolved";
-  created_at: string;
-  resolved_at: string | null;
-};
-
-function AdminToolCodeRequestsPage() {
+function AdminCentersPage() {
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
-  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"pending" | "resolved">("pending");
 
-  const requests = useQuery({
-    queryKey: ["admin", "tool-code-requests"],
+  const [centerName, setCenterName] = useState("");
+  const [selectedCenter, setSelectedCenter] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState("");
+
+  const [codeType, setCodeType] = useState<
+    "question" | "sprix" | "qureo" | "sprix_qureo"
+  >("question");
+
+  const [expiresAt, setExpiresAt] = useState("");
+  const [sprixAccessDays, setSprixAccessDays] = useState("30");
+  const [count, setCount] = useState("10");
+
+  const [codeFilter, setCodeFilter] = useState<
+    "all" | "sprix" | "qureo" | "sprix_qureo" | "question"
+  >("all");
+
+  // ==========================================
+  // QUERIES
+  // ==========================================
+
+  const centersQuery = useQuery({
+    queryKey: ["admin", "centers"],
     enabled: isAdmin,
-    queryFn: async () => (await adminGetToolCodeRequests()) as CodeRequest[],
+    queryFn: async () => adminGetCenters(),
   });
 
-  const resolve = useMutation({
-    mutationFn: (requestId: string) =>
-      adminResolveToolCodeRequest({ data: { requestId } }),
-    onSuccess: async () => {
-      toast.success("تم نقل الطلب إلى قائمة المحلولين.");
-      await qc.invalidateQueries({ queryKey: ["admin", "tool-code-requests"] });
-      setActiveTab("resolved");
+  const plansQuery = useQuery({
+    queryKey: ["admin", "plans"],
+    enabled: isAdmin,
+    queryFn: async () => adminGetPlans(),
+  });
+
+  const codesQuery = useQuery({
+    queryKey: ["admin", "center-codes", selectedCenter],
+    enabled: isAdmin,
+    queryFn: async () =>
+      adminGetCenterCodes({
+        data: selectedCenter ? { centerId: selectedCenter } : {},
+      }),
+  });
+
+  // ==========================================
+  // CREATE CENTER
+  // ==========================================
+
+  const createCenter = useMutation({
+    mutationFn: async (name: string) => {
+      await adminCreateCenter({ data: { name } });
     },
-    onError: (error: Error) => toast.error(error.message),
+
+    onSuccess: () => {
+      toast.success("تم إنشاء المركز");
+      setCenterName("");
+      void qc.invalidateQueries({ queryKey: ["admin", "centers"] });
+    },
+
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // ==========================================
+  // GENERATE CODES
+  // ==========================================
+
+  const generate = useMutation({
+    mutationFn: async (params: {
+      center: string;
+      count: number;
+      codeType: "question" | "sprix" | "qureo" | "sprix_qureo";
+      plan?: string | null;
+      expiresAt?: string | null;
+      sprixAccessDays?: number | null;
+    }) => {
+      return (await adminGenerateCenterCodes({
+        data: params,
+      })) as unknown as number;
+    },
+
+    onSuccess: (made) => {
+      toast.success(`تم توليد ${made} كود`);
+      void qc.invalidateQueries({
+        queryKey: ["admin", "center-codes"],
+      });
+    },
+
+    onError: (e: Error) =>
+      toast.error(
+        e.message === "forbidden"
+          ? "هذه العملية للمشرفين فقط"
+          : e.message,
+      ),
   });
 
   if (!isAdmin) return <Navigate to="/dashboard" />;
 
-  const all = requests.data ?? [];
-  const pending = all.filter((item) => item.status === "pending");
-  const resolved = all.filter((item) => item.status === "resolved");
-  const currentRequests = activeTab === "pending" ? pending : resolved;
+  // ==========================================
+  // DATA
+  // ==========================================
 
-  const codeTypeLabel = (type: string | null) => {
+  const codes = codesQuery.data ?? [];
+
+  const centerName_ = (id: string) =>
+    centersQuery.data?.find((c) => c.id === id)?.name ?? "—";
+
+  const filteredCodes =
+    codeFilter === "all"
+      ? codes
+      : codes.filter((code) => code.code_type === codeFilter);
+
+  const used = filteredCodes.filter((c) => c.used_by).length;
+
+  const codeFilterLabel = {
+    all: "جميع الأكواد",
+    sprix: "الثقافة المالية",
+    qureo: "البرمجة",
+    sprix_qureo: "الثقافة المالية والبرمجة",
+    question: "أكواد الأسئلة",
+  }[codeFilter];
+
+  const getCodeTypeLabel = (type: string) => {
     switch (type) {
-      case "sprix": return "SPRIX — الثقافة المالية";
-      case "qureo": return "Qureo — البرمجة";
-      case "sprix_qureo": return "SPRIX + Qureo — الثقافة المالية والبرمجة";
-      default: return "نوع غير معروف";
+      case "sprix":
+        return "SPRIX — الثقافة المالية";
+
+      case "qureo":
+        return "Qureo — البرمجة";
+
+      case "sprix_qureo":
+        return "SPRIX + Qureo — الثقافة المالية والبرمجة";
+
+      default:
+        return "Question — باقة أسئلة";
     }
   };
 
-  const renderRequest = (item: CodeRequest) => (
-    <div
-      key={item.id}
-      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
-    >
-      <div className="min-w-0 flex-1 space-y-2">
-        <div>
-          <p className="font-bold">{item.student_name || "طالب"}</p>
-          <p dir="ltr" className="mt-1 text-right text-sm text-muted-foreground">
-            {item.student_phone || "لا يوجد رقم هاتف"}
-          </p>
-        </div>
-        <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
-          <p className="text-xs text-muted-foreground">الكود متفعل لـ</p>
-          <p className="mt-1 font-semibold">{codeTypeLabel(item.tool_code_type)}</p>
-        </div>
-        <div className="grid gap-2 rounded-lg bg-muted/50 p-3 text-sm sm:grid-cols-2">
-          <div className="min-w-0">
-            <p className="mb-1 text-xs text-muted-foreground">Account ID</p>
-            <p dir="ltr" className="break-all font-mono">{item.account_id}</p>
-          </div>
-          <div className="min-w-0">
-            <p className="mb-1 text-xs text-muted-foreground">Password</p>
-            <div className="flex items-center gap-2" dir="ltr">
-              <span className="min-w-0 break-all font-mono">
-                {visiblePasswords[item.id] ? item.account_password : "••••••••••••"}
-              </span>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="size-8 shrink-0"
-                aria-label={visiblePasswords[item.id] ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-                onClick={() => setVisiblePasswords((current) => ({
-                  ...current,
-                  [item.id]: !current[item.id],
-                }))}
-              >
-                {visiblePasswords[item.id] ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+  // ==========================================
+  // PDF EXPORT
+  // ==========================================
 
-      {activeTab === "pending" ? (
-        <Button
-          size="sm"
-          disabled={resolve.isPending}
-          onClick={() => resolve.mutate(item.id)}
-        >
-          <CheckCircle2 className="ml-2 size-4" />
-          تم الحل
-        </Button>
-      ) : (
-        <Badge variant="secondary" className="gap-1">
-          <CheckCircle2 className="size-3.5" />
-          تم الحل
-        </Badge>
-      )}
-    </div>
-  );
+  const exportPdf = () => {
+    if (!filteredCodes.length) {
+      toast.error("لا توجد أكواد لتصديرها");
+      return;
+    }
+
+    const escapeHtml = (value: string) =>
+      value.replace(/[&<>"']/g, (char) => {
+        const entities: Record<string, string> = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        };
+
+        return entities[char] ?? char;
+      });
+
+    const rows = filteredCodes
+      .map(
+        (code, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td class="code">${escapeHtml(String(code.code ?? ""))}</td>
+            <td>${escapeHtml(centerName_(code.center_id))}</td>
+          </tr>
+        `,
+      )
+      .join("");
+
+    const selectedCenterName = selectedCenter
+      ? centerName_(selectedCenter)
+      : "جميع المراكز";
+
+    const printWindow = window.open(
+      "",
+      "_blank",
+      "width=1000,height=800",
+    );
+
+    if (!printWindow) {
+      toast.error("اسمح بفتح النوافذ المنبثقة لتنزيل ملف PDF");
+      return;
+    }
+
+    printWindow.document.open();
+
+    printWindow.document.write(`<!doctype html>
+      <html lang="ar" dir="rtl">
+        <head>
+          <meta charset="UTF-8" />
+          <title>أكواد التفعيل - WISO Agent</title>
+
+          <style>
+            @page {
+              size: A4;
+              margin: 14mm;
+            }
+
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              font-family: Arial, Tahoma, sans-serif;
+              color: #172033;
+              direction: rtl;
+              margin: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #243b64;
+              padding-bottom: 14px;
+              margin-bottom: 20px;
+            }
+
+            h1 {
+              margin: 0 0 8px;
+              font-size: 23px;
+              color: #243b64;
+            }
+
+            .subtitle {
+              margin: 0;
+              color: #5b6475;
+              font-size: 13px;
+            }
+
+            .info {
+              display: flex;
+              justify-content: space-between;
+              gap: 12px;
+              margin-bottom: 14px;
+              font-size: 12px;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+
+            th,
+            td {
+              border: 1px solid #cbd3df;
+              padding: 10px 8px;
+              text-align: center;
+              font-size: 12px;
+            }
+
+            th {
+              background: #243b64;
+              color: white;
+              font-weight: 700;
+            }
+
+            tbody tr:nth-child(even) {
+              background: #f2f5fa;
+            }
+
+            td.code {
+              direction: ltr;
+              text-align: center;
+              font-family: Consolas, monospace;
+              font-weight: 700;
+              letter-spacing: .4px;
+            }
+
+            .footer {
+              margin-top: 18px;
+              text-align: center;
+              color: #687386;
+              font-size: 10px;
+            }
+
+            @media screen {
+              body {
+                padding: 24px;
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          <div class="header">
+            <h1>WISO Agent</h1>
+            <p class="subtitle">كشف أكواد التفعيل</p>
+          </div>
+
+          <div class="info">
+            <span>المركز: ${escapeHtml(selectedCenterName)}</span>
+            <span>التصنيف: ${escapeHtml(codeFilterLabel)}</span>
+            <span>عدد الأكواد: ${filteredCodes.length}</span>
+            <span>التاريخ: ${new Date().toLocaleDateString("ar-EG")}</span>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 12%">م</th>
+                <th style="width: 44%">كود التفعيل</th>
+                <th style="width: 44%">اسم السنتر</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            WISO Agent — أكواد التفعيل
+          </div>
+
+          <script>
+            window.onload = () => {
+              window.focus();
+              window.print();
+            };
+          </script>
+        </body>
+      </html>`);
+
+    printWindow.document.close();
+  };
+
+  // ==========================================
+  // CSV EXPORT
+  // ==========================================
+
+  const exportCsv = () => {
+    if (!filteredCodes.length) {
+      toast.error("لا توجد أكواد للتصدير");
+      return;
+    }
+
+    const header =
+      "code,type,center,plan,status,expires_at,used_by,used_at,created_at";
+
+    const escapeCsv = (value: unknown) => {
+      const text = String(value ?? "");
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const lines = filteredCodes.map((c) =>
+      [
+        c.code,
+        c.code_type,
+        centerName_(c.center_id),
+        plansQuery.data?.find((p) => p.id === c.plan_id)?.name_ar ?? "",
+        c.used_by
+          ? "used"
+          : new Date(c.expires_at ?? 0).getTime() <= Date.now() &&
+              c.expires_at
+            ? "expired"
+            : "available",
+        c.expires_at ?? "",
+        c.used_by_name ?? c.used_by ?? "",
+        c.used_at ?? "",
+        c.created_at,
+      ]
+        .map(escapeCsv)
+        .join(","),
+    );
+
+    const blob = new Blob(
+      ["\uFEFF", [header, ...lines].join("\n")],
+      { type: "text/csv;charset=utf-8" },
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `wiso-center-codes-${codeFilter}.csv`;
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+  // ==========================================
+  // PAGE
+  // ==========================================
 
   return (
     <main dir="rtl" className="page-shell">
+
       <PageHeader
-        title="طلبات أكواد الأدوات"
-        subtitle="طلبات الطلاب المرسلة باستخدام أكواد SPRIX وQureo."
+        title="المراكز وأكواد التفعيل"
+        subtitle="كل كود يُستخدم مرة واحدة فقط ويمنح الطالب الباقة المرتبطة به."
       />
 
-      <div className="mt-6 flex flex-wrap gap-3">
+      {/* CREATE CENTER */}
+
+      <section className="surface-panel mt-6 space-y-3 p-5">
+
+        <h2 className="font-display text-base font-semibold">
+          إضافة مركز
+        </h2>
+
+        <div className="flex flex-wrap gap-3">
+
+          <Input
+            value={centerName}
+            onChange={(e) => setCenterName(e.target.value)}
+            placeholder="اسم المركز"
+            className="max-w-xs"
+          />
+
+          <Button
+            disabled={!centerName.trim() || createCenter.isPending}
+            onClick={() => createCenter.mutate(centerName)}
+          >
+            إنشاء
+          </Button>
+
+        </div>
+      </section>
+
+      {/* GENERATE CODES */}
+
+      <section className="surface-panel mt-5 space-y-4 p-5">
+
+        <h2 className="font-display text-base font-semibold">
+          توليد أكواد
+        </h2>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+          <div className="space-y-1.5">
+
+            <Label className="text-xs text-muted-foreground">
+              نوع الكود
+            </Label>
+
+            <Select
+              value={codeType}
+              onValueChange={(v) => {
+                const next = v as
+                  | "question"
+                  | "sprix"
+                  | "qureo"
+                  | "sprix_qureo";
+
+                setCodeType(next);
+
+                if (next !== "question") {
+                  setSelectedPlan("");
+                }
+              }}
+            >
+
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="اختر نوع الكود" />
+              </SelectTrigger>
+
+              <SelectContent dir="rtl">
+                <SelectItem value="question">
+                  WISO Question — باقة أسئلة
+                </SelectItem>
+
+                <SelectItem value="sprix">
+                  WISO SPRIX — الثقافة المالية
+                </SelectItem>
+
+                <SelectItem value="qureo">
+                  WISO Qureo — البرمجة
+                </SelectItem>
+
+                <SelectItem value="sprix_qureo">
+                  WISO SPRIX + Qureo
+                </SelectItem>
+              </SelectContent>
+
+            </Select>
+          </div>
+
+          {/* CENTER */}
+
+          <div className="space-y-1.5">
+
+            <Label className="text-xs text-muted-foreground">
+              المركز
+            </Label>
+
+            <Select
+              value={selectedCenter}
+              onValueChange={setSelectedCenter}
+            >
+
+              <SelectTrigger>
+                <SelectValue placeholder="اختر المركز" />
+              </SelectTrigger>
+
+              <SelectContent>
+
+                {(centersQuery.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* PLAN */}
+
+          {codeType === "question" ? (
+
+            <div className="space-y-1.5">
+
+              <Label className="text-xs text-muted-foreground">
+                الباقة
+              </Label>
+
+              <Select
+                value={selectedPlan}
+                onValueChange={setSelectedPlan}
+              >
+
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر الباقة" />
+                </SelectTrigger>
+
+                <SelectContent dir="rtl">
+
+                  {(plansQuery.data ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name_ar}
+                    </SelectItem>
+                  ))}
+
+                </SelectContent>
+              </Select>
+            </div>
+
+          ) : null}
+
+          {/* COUNT */}
+
+          <div className="space-y-1.5">
+
+            <Label className="text-xs text-muted-foreground">
+              عدد الأكواد
+            </Label>
+
+            <Input
+              value={count}
+              inputMode="numeric"
+              onChange={(e) => setCount(e.target.value)}
+            />
+          </div>
+
+          {/* EXPIRY */}
+
+          <div className="space-y-1.5">
+
+            <Label className="text-xs text-muted-foreground">
+              انتهاء الكود (اختياري)
+            </Label>
+
+            <Input
+              type="datetime-local"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+            />
+          </div>
+
+          {/* ACCESS DAYS */}
+
+          {codeType !== "question" ? (
+
+            <div className="space-y-1.5">
+
+              <Label className="text-xs text-muted-foreground">
+                صلاحية الأداة بالأيام
+              </Label>
+
+              <Input
+                type="number"
+                min={1}
+                max={3650}
+                value={sprixAccessDays}
+                onChange={(e) => setSprixAccessDays(e.target.value)}
+              />
+            </div>
+
+          ) : null}
+
+        </div>
+
         <Button
-          variant={activeTab === "pending" ? "default" : "outline"}
-          onClick={() => setActiveTab("pending")}
-          className="gap-2"
+          disabled={
+            !selectedCenter ||
+            (codeType === "question" && !selectedPlan) ||
+            generate.isPending
+          }
+          onClick={() =>
+            generate.mutate({
+              center: selectedCenter,
+              plan: codeType === "question" ? selectedPlan : null,
+              count: Number(count) || 0,
+              codeType,
+              expiresAt: expiresAt
+                ? new Date(expiresAt).toISOString()
+                : null,
+              sprixAccessDays:
+                codeType !== "question"
+                  ? Number(sprixAccessDays) || 30
+                  : null,
+            })
+          }
         >
-          <Clock3 className="size-4" />
-          الطلبات الجديدة
-          <Badge variant={activeTab === "pending" ? "secondary" : "outline"}>{pending.length}</Badge>
+          توليد الأكواد
         </Button>
-        <Button
-          variant={activeTab === "resolved" ? "default" : "outline"}
-          onClick={() => setActiveTab("resolved")}
-          className="gap-2"
-        >
-          <ClipboardList className="size-4" />
-          الطلبات المحلولة
-          <Badge variant={activeTab === "resolved" ? "secondary" : "outline"}>{resolved.length}</Badge>
-        </Button>
+
+      </section>
+
+      {/* FILTERS */}
+
+      <section className="surface-panel mt-6 space-y-3 p-4">
+
+        <h2 className="text-sm font-semibold">
+          تصفية الأكواد حسب النوع
+        </h2>
+
+        <div className="flex flex-wrap gap-2">
+
+          {([
+            ["all", "الكل"],
+            ["sprix", "الثقافة المالية"],
+            ["qureo", "البرمجة"],
+            ["sprix_qureo", "الثقافة والبرمجة"],
+            ["question", "أكواد الأسئلة"],
+          ] as const).map(([value, label]) => (
+
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant={codeFilter === value ? "default" : "outline"}
+              onClick={() => setCodeFilter(value)}
+            >
+
+              {label}
+
+              <Badge
+                variant={
+                  codeFilter === value
+                    ? "secondary"
+                    : "outline"
+                }
+                className="mr-2"
+              >
+                {value === "all"
+                  ? codes.length
+                  : codes.filter((c) => c.code_type === value).length}
+              </Badge>
+
+            </Button>
+
+          ))}
+
+        </div>
+      </section>
+
+      {/* EXPORT */}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+
+        <p className="text-sm text-muted-foreground">
+
+          {codesQuery.isPending
+            ? "جارٍ تحميل الأكواد..."
+            : `${filteredCodes.length} كود (${codeFilterLabel}) · ${used} مستخدم · ${filteredCodes.length - used} متاح`}
+
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+
+          <Button
+            variant="default"
+            size="sm"
+            disabled={!filteredCodes.length}
+            onClick={exportPdf}
+          >
+            تنزيل PDF
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!filteredCodes.length}
+            onClick={exportCsv}
+          >
+            تصدير CSV
+          </Button>
+
+        </div>
       </div>
 
-      {requests.isPending ? (
-        <p className="mt-6 text-sm text-muted-foreground">جارٍ تحميل الطلبات...</p>
-      ) : requests.isError ? (
-        <div className="mt-6 space-y-3">
-          <p className="text-sm text-destructive">تعذّر تحميل الطلبات.</p>
-          <Button variant="outline" onClick={() => void requests.refetch()}>
-            إعادة المحاولة
-          </Button>
-        </div>
-      ) : (
-        <Card className="mt-5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {activeTab === "pending" ? (
-                <><Clock3 className="size-5 text-amber-500" /> الطلبات الجديدة</>
-              ) : (
-                <><ClipboardList className="size-5 text-emerald-600" /> الطلبات المحلولة</>
-              )}
-              <Badge variant="secondary">{currentRequests.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {currentRequests.length ? (
-              currentRequests.map(renderRequest)
-            ) : (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                {activeTab === "pending" ? "لا توجد طلبات جديدة." : "لا توجد طلبات محلولة حتى الآن."}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* CODES LIST */}
+
+      <div className="mt-4 space-y-2">
+
+        {codesQuery.isPending ? (
+
+          Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))
+
+        ) : codesQuery.isError ? (
+
+          <p className="text-sm text-destructive">
+            تعذّر تحميل الأكواد.
+          </p>
+
+        ) : !filteredCodes.length ? (
+
+          <EmptyState
+            icon={Building2}
+            title="لا توجد أكواد في هذا التصنيف"
+            description="اختر تصنيفاً آخر أو ولّد أكواداً جديدة."
+          />
+
+        ) : (
+
+          filteredCodes.map((code) => (
+
+            <div
+              key={code.id}
+              className="surface-panel flex flex-wrap items-center justify-between gap-3 p-4"
+            >
+
+              <div>
+
+                <code className="font-mono text-sm">
+                  {code.code}
+                </code>
+
+                <p className="mt-1 text-xs text-muted-foreground">
+
+                  {getCodeTypeLabel(code.code_type)} ·{" "}
+                  {centerName_(code.center_id)}
+
+                  {code.expires_at
+                    ? ` · ينتهي ${new Date(code.expires_at).toLocaleString("ar-EG")}`
+                    : ""}
+
+                </p>
+              </div>
+
+              {code.used_by ? (
+
+                <span className="text-xs text-muted-foreground">
+
+                  {code.used_by_name || "طالب"}
+
+                  {code.used_by_user_code
+                    ? ` · #${code.used_by_user_code}`
+                    : ""}
+
+                </span>
+
+              ) : null}
+
+              <Badge
+                variant={
+                  code.used_by
+                    ? "secondary"
+                    : code.expires_at &&
+                        new Date(code.expires_at).getTime() <= Date.now()
+                      ? "destructive"
+                      : "default"
+                }
+              >
+
+                {code.used_by
+                  ? `مستخدم${
+                      code.used_at
+                        ? " · " +
+                          new Date(code.used_at).toLocaleDateString("ar-EG")
+                        : ""
+                    }`
+                  : code.expires_at &&
+                      new Date(code.expires_at).getTime() <= Date.now()
+                    ? "منتهي"
+                    : "متاح"}
+
+              </Badge>
+
+            </div>
+
+          ))
+
+        )}
+
+      </div>
+
     </main>
   );
 }

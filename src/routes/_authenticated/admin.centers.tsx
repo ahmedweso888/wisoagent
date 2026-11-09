@@ -111,6 +111,128 @@ function AdminCentersPage() {
   const used = codes.filter((c) => c.used_by).length;
   const centerName_ = (id: string) => centersQuery.data?.find((c) => c.id === id)?.name ?? "—";
 
+  const exportPdf = () => {
+    if (!codes.length) {
+      toast.error("لا توجد أكواد لتصديرها");
+      return;
+    }
+
+    const escapeHtml = (value: string) =>
+      value.replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[char] ?? char);
+
+    const rows = codes.map((code, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td class="code">${escapeHtml(String(code.code ?? ""))}</td>
+        <td>${escapeHtml(centerName_(code.center_id))}</td>
+      </tr>
+    `).join("");
+
+    const selectedCenterName = selectedCenter ? centerName_(selectedCenter) : "جميع المراكز";
+    const printWindow = window.open("", "_blank", "width=1000,height=800");
+
+    if (!printWindow) {
+      toast.error("اسمح بفتح النوافذ المنبثقة لتنزيل ملف PDF");
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+      <html lang="ar" dir="rtl">
+        <head>
+          <meta charset="UTF-8" />
+          <title>أكواد التفعيل - WISO Agent</title>
+          <style>
+            @page { size: A4; margin: 14mm; }
+            * { box-sizing: border-box; }
+            body {
+              font-family: Arial, Tahoma, sans-serif;
+              color: #172033;
+              direction: rtl;
+              margin: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #243b64;
+              padding-bottom: 14px;
+              margin-bottom: 20px;
+            }
+            h1 { margin: 0 0 8px; font-size: 23px; color: #243b64; }
+            .subtitle { margin: 0; color: #5b6475; font-size: 13px; }
+            .info {
+              display: flex;
+              justify-content: space-between;
+              gap: 12px;
+              margin-bottom: 14px;
+              font-size: 12px;
+            }
+            table { width: 100%; border-collapse: collapse; }
+            th, td {
+              border: 1px solid #cbd3df;
+              padding: 10px 8px;
+              text-align: center;
+              font-size: 12px;
+            }
+            th { background: #243b64; color: white; font-weight: 700; }
+            tbody tr:nth-child(even) { background: #f2f5fa; }
+            td.code {
+              direction: ltr;
+              text-align: center;
+              font-family: Consolas, monospace;
+              font-weight: 700;
+              letter-spacing: .4px;
+            }
+            .footer {
+              margin-top: 18px;
+              text-align: center;
+              color: #687386;
+              font-size: 10px;
+            }
+            @media screen {
+              body { padding: 24px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>WISO Agent</h1>
+            <p class="subtitle">كشف أكواد التفعيل</p>
+          </div>
+          <div class="info">
+            <span>المركز: ${escapeHtml(selectedCenterName)}</span>
+            <span>عدد الأكواد: ${codes.length}</span>
+            <span>تاريخ التصدير: ${new Date().toLocaleDateString("ar-EG")}</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 12%">م</th>
+                <th style="width: 44%">كود التفعيل</th>
+                <th style="width: 44%">اسم السنتر</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div class="footer">WISO Agent — أكواد التفعيل</div>
+          <script>
+            window.onload = () => {
+              window.focus();
+              window.print();
+            };
+          </script>
+        </body>
+      </html>`);
+    printWindow.document.close();
+  };
+
   const exportCsv = () => {
     const header = "code,type,center,plan,status,expires_at,used_by,used_at,created_at";
     const lines = codes.map((c) =>
@@ -254,9 +376,14 @@ function AdminCentersPage() {
             ? "جارٍ تحميل الأكواد..."
             : `${codes.length} كود · ${used} مستخدم · ${codes.length - used} متاح`}
         </p>
-        <Button variant="outline" size="sm" disabled={!codes.length} onClick={exportCsv}>
-          تصدير CSV
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="default" size="sm" disabled={!codes.length} onClick={exportPdf}>
+            تنزيل PDF
+          </Button>
+          <Button variant="outline" size="sm" disabled={!codes.length} onClick={exportCsv}>
+            تصدير CSV
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 space-y-2">
