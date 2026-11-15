@@ -89,6 +89,7 @@ if (onboardingComplete && location.pathname === "/onboarding") {
 const NAV = [
   { to: "/dashboard", label: "الرئيسية" },
   { to: "/profile", label: "الملف الشخصي" },
+  { to: "/partners", label: "الدعوات والعمولات" },
   { to: "/plan", label: "خطة السنة الدراسية" },
   { to: "/generate", label: "مولد الأسئلة" },
   { to: "/wallet", label: "شحن المحفظة" },
@@ -114,6 +115,7 @@ const ADMIN_NAV = [
   { to: "/admin/center-requests", label: "طلبات السناتر" },
   { to: "/admin/code-requests", label: "طلبات الكود" },
   { to: "/admin/tools", label: "أدوات WISO" },
+  { to: "/admin/partners", label: "الدعوات والمؤثرون" },
   { to: "/admin/system", label: "إعدادات النظام" },
 ] as const;
 
