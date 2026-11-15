@@ -133,7 +133,7 @@ function NavLinks({
       {NAV.map((item) => (
         <Link
           key={item.to}
-          to={item.to}
+          to={item.to as never}
           onClick={onNavigate}
           className="block rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           activeProps={{
@@ -152,7 +152,7 @@ function NavLinks({
           {ADMIN_NAV.map((item) => (
             <Link
               key={item.to}
-              to={item.to}
+              to={item.to as never}
               onClick={onNavigate}
               className="block rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               activeProps={{
