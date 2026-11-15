@@ -94,8 +94,7 @@ const NAV = [
   { to: "/generate", label: "مولد الأسئلة" },
   { to: "/wallet", label: "شحن المحفظة" },
   { to: "/requests", label: "الطلبات الخاصة" },
-  { to: "/tools", label: "أدوات WISO" },
-  { to: "/work-with-wiso", label: "اشتغل مع WISO" },
+  { to: "/tools", label: "خدمات WISO" },
   { to: "/notifications", label: "الإشعارات" },
   { to: "/settings", label: "الإعدادات" },
 ] as const;
@@ -114,7 +113,7 @@ const ADMIN_NAV = [
   { to: "/admin/requests", label: "الطلبات الخاصة" },
   { to: "/admin/center-requests", label: "طلبات السناتر" },
   { to: "/admin/code-requests", label: "طلبات الكود" },
-  { to: "/admin/tools", label: "أدوات WISO" },
+  { to: "/admin/tools", label: "خدمات WISO" },
   { to: "/admin/partners", label: "الدعوات والمؤثرون" },
   { to: "/admin/system", label: "إعدادات النظام" },
 ] as const;
